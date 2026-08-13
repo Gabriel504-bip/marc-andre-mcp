@@ -1,0 +1,200 @@
+import { z } from 'zod';
+import { sessionToken } from '../../schemas/common.js';
+import { truncateList } from '../../format/summarize.js';
+/**
+ * Conciliation d'exercice (relevé bancaire déposé vs registre QuickBooks).
+ * Les trois outils de ce fichier sont en LECTURE SEULE côté marc-andre-app —
+ * aucun d'eux ne modifie ni le relevé, ni QuickBooks, ni le module Écritures.
+ * Seul ma_conciliation_exercice_vers_ecritures (palier 2, tier2/conciliation.ts)
+ * a un effet.
+ */
+/**
+ * Paramètres communs aux quatre outils de conciliation d'exercice.
+ * `exercice` OU `anneeDebut` doit être fourni (jamais les deux exigés à la
+ * fois — un seul suffit à identifier l'exercice du 1er juillet au 30 juin).
+ */
+export const exerciceInputSchema = z
+    .object({
+    sessionToken,
+    exercice: z
+        .string()
+        .regex(/^\d{4}-\d{4}$/, 'Format attendu : "AAAA-AAAA" (ex. "2022-2023")')
+        .optional()
+        .describe('Exercice au format "AAAA-AAAA" (ex. "2022-2023"), du 1er juillet au 30 juin.'),
+    anneeDebut: z
+        .number()
+        .int()
+        .optional()
+        .describe('Année de début de l\'exercice (ex. 2022 pour l\'exercice 2022-2023) — alternative à exercice.'),
+    compte: z
+        .string()
+        .default('Chequing(-952)')
+        .optional()
+        .describe('Compte bancaire à concilier.'),
+    rechargerQbo: z
+        .boolean()
+        .default(false)
+        .optional()
+        .describe("Force un rechargement des données QuickBooks avant la comparaison plutôt que d'utiliser le cache."),
+    inclureMoisNonFermes: z
+        .boolean()
+        .default(false)
+        .optional()
+        .describe('Inclut les mois dont la fermeture comptable n\'est pas encore confirmée (par défaut ' +
+        'écartés — voir les mois écartés renvoyés avec leur cause).'),
+    /**
+     * 🆕 (2026-08-13) — sans ce champ dans le schéma, zod le SUPPRIMAIT en
+     * silence (`.object()` élague les clés inconnues) : les décisions
+     * arrivaient donc jamais au moteur, qui répondait
+     * `decisionsAppliquees: []` / `nbAmbigusNonResolues: 2` sans le moindre
+     * message d'erreur — un échec muet, le pire genre. Constaté en
+     * production sur l'exercice 2022-2023 (Clinique Entre-nous) : deux
+     * ambiguïtés départagées par Gabriel restaient éternellement en attente.
+     *
+     * Effet côté marc-andre-app : `appliquerDecisionsAmbigus`
+     * (lib/conciliation-exercice.js) apparie la ligne de relevé au candidat
+     * QuickBooks retenu, et les candidats PERDANTS deviennent des lignes à
+     * supprimer (sauf une paie, qui ne rejoint JAMAIS aSupprimer — invariant
+     * du moteur). Une décision qui nomme un candidat inexistant est REFUSÉE
+     * (jamais appliquée au hasard) et renvoyée dans `decisionsRefusees`.
+     *
+     * Reste sans danger en palier 1 : sur les étapes csv/excel, ces décisions
+     * ne changent que le CONTENU D'UN FICHIER que Gabriel relit avant de
+     * l'appliquer — aucune suppression n'est déclenchée dans QuickBooks par
+     * cet outil.
+     */
+    decisionsAmbigus: z
+        .array(z.object({
+        codeReleve: z
+            .string()
+            .min(1)
+            .describe('Code de la ligne de relevé ambiguë (ex. "R-2223-2304").'),
+        codeQboRetenu: z
+            .string()
+            .min(1)
+            .describe('Code du candidat QuickBooks RETENU comme correspondance (ex. "Q-2223-2304"). ' +
+            'Doit être l\'un des candidats réels de cette ambiguïté, sinon la décision est refusée.'),
+    }))
+        .optional()
+        .describe('Décisions humaines départageant les ambiguïtés (une ligne de relevé, plusieurs candidats ' +
+        'QuickBooks de types différents). Chaque entrée apparie une ligne de relevé au candidat ' +
+        'retenu ; les candidats perdants deviennent des lignes à supprimer. Les ambiguïtés sans ' +
+        'décision restent en attente — jamais tranchées au hasard.'),
+    /**
+     * 🆕 (2026-08-13) — également élagué en silence avant ce correctif. Chaque
+     * étape de marc-andre-app a sa PROPRE valeur par défaut (lecture : false,
+     * pour rester sous le délai ; csv : true, pour ne jamais produire un CSV
+     * de suppression à partir d'un relevé incomplet). On n'impose donc AUCUN
+     * défaut ici : omettre le champ conserve exactement le comportement
+     * actuel de chaque étape.
+     */
+    reparerReleves: z
+        .boolean()
+        .optional()
+        .describe('Relit (via IA) les relevés dont la balance ne ferme pas avant de comparer. Omis = défaut ' +
+        "propre à chaque étape (lecture : non ; CSV de suppression : oui). Coûte du temps et un " +
+        'appel IA par mois réparé ; persiste la meilleure extraction, jamais une pire.'),
+})
+    .refine((v) => !!v.exercice || v.anneeDebut !== undefined, {
+    message: 'Précise exercice (ex. "2022-2023") ou anneeDebut (ex. 2022).',
+});
+const MAX_ECHANTILLON = 8;
+/**
+ * 🆕 (2026-08-13) — les étapes `csv` / `excel` / `vers_ecritures` de
+ * marc-andre-app relisent jusqu'à 2 relevés par appel (un appel IA chacun)
+ * AVANT de produire leur sortie — elles dépassent donc volontairement les
+ * 15 000 ms du défaut global, et le faisaient échouer systématiquement côté
+ * MCP alors que le travail aboutissait et se persistait mois par mois.
+ * 60 s couvre le cas réel observé (2 relevés BMO de ~10 pages) tout en
+ * restant sous la limite d'exécution d'une fonction Vercel.
+ *
+ * `ma_conciliation_exercice` (lecture pure) garde le défaut : elle est censée
+ * répondre vite, et si elle traîne c'est un signal, pas à masquer.
+ */
+export const TIMEOUT_CONCILIATION_LENTE_MS = 60_000;
+/**
+ * Élagage générique : toute liste volumineuse (catégories de lignes,
+ * mois détaillés, etc.) est réduite à un échantillon annoncé — jamais un
+ * dump complet de centaines de lignes. Les compteurs, la parité et les
+ * mois écartés (structures petites) passent tels quels.
+ */
+export function summarizeConciliation(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw))
+        return raw;
+    const out = {};
+    const troncatures = [];
+    for (const [key, value] of Object.entries(raw)) {
+        if (Array.isArray(value) && value.length > MAX_ECHANTILLON) {
+            const { items, truncated, totalAvant } = truncateList(value, MAX_ECHANTILLON);
+            out[key] = { total: totalAvant, echantillon: items, troncature: truncated };
+            troncatures.push(key);
+        }
+        else {
+            out[key] = value;
+        }
+    }
+    if (troncatures.length > 0) {
+        out.avertissementTroncature =
+            `Catégories réduites à un échantillon de ${MAX_ECHANTILLON} lignes (${troncatures.join(', ')}) ` +
+                '— ce n\'est pas le dump complet. Utilise ma_conciliation_exercice_excel (plan de correction) ' +
+                'ou ma_conciliation_exercice_csv (suppressions) pour le détail exhaustif.';
+    }
+    return out;
+}
+/**
+ * Annonce la taille des champs de type fichier encodé en base64 sans les
+ * résumer ni les tronquer — Claude doit recevoir le base64 intact pour le
+ * transmettre tel quel, seule la taille affichée est calculée ici.
+ */
+function annoncerTailleBase64(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw))
+        return raw;
+    const tailles = {};
+    for (const [key, value] of Object.entries(raw)) {
+        if (typeof value === 'string' && value.length > 500) {
+            const octetsApprox = Math.round((value.length * 3) / 4);
+            tailles[key] = `~${(octetsApprox / 1024).toFixed(1)} Ko (base64, non tronqué)`;
+        }
+    }
+    return Object.keys(tailles).length > 0 ? { ...raw, tailleFichiers: tailles } : raw;
+}
+export const conciliationExercice = {
+    name: 'ma_conciliation_exercice',
+    tier: 1,
+    description: 'Compare le relevé bancaire déposé et le registre QuickBooks pour un exercice complet (1er ' +
+        'juillet → 30 juin), avec priorité stricte à la paie et sans jamais deviner en cas ' +
+        "d'ambiguïté. Lecture seule. Renvoie les catégories (à supprimer, à ajouter, paie sans " +
+        'retrait, ambigus, en attente de décision), la parité en nombre de lignes et en montant, et ' +
+        'les mois écartés avec leur cause. ⚠️ Les catégories volumineuses sont réduites à un ' +
+        'échantillon — jamais le dump complet (voir avertissementTroncature).',
+    inputSchema: exerciceInputSchema,
+    action: 'conciliation_exercice',
+    postProcess: (raw) => summarizeConciliation(raw),
+};
+export const conciliationExerciceExcel = {
+    name: 'ma_conciliation_exercice_excel',
+    tier: 1,
+    description: 'Plan de correction en .xlsx (base64) : résumé mois par mois, à supprimer, à ajouter, à ' +
+        'corriger, en attente de décision, contrôle. Lecture seule. Le base64 est renvoyé intact ' +
+        '(non résumé) — seule sa taille approximative est annoncée.',
+    inputSchema: exerciceInputSchema,
+    timeoutMs: TIMEOUT_CONCILIATION_LENTE_MS,
+    action: 'conciliation_exercice_excel',
+    postProcess: (raw) => annoncerTailleBase64(raw),
+};
+export const conciliationExerciceCsv = {
+    name: 'ma_conciliation_exercice_csv',
+    tier: 1,
+    description: 'CSV des suppressions, prêt pour le panneau « Correctifs en lot par CSV ». Lecture seule, ne ' +
+        'supprime rien. Le contenu est renvoyé intact (non résumé) — seule sa taille approximative ' +
+        'est annoncée si encodé en base64.',
+    inputSchema: exerciceInputSchema,
+    timeoutMs: TIMEOUT_CONCILIATION_LENTE_MS,
+    action: 'conciliation_exercice_csv',
+    postProcess: (raw) => annoncerTailleBase64(raw),
+};
+export const tier1ConciliationTools = [
+    conciliationExercice,
+    conciliationExerciceExcel,
+    conciliationExerciceCsv,
+];
