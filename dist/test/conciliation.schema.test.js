@@ -26,6 +26,21 @@ describe('exerciceInputSchema — champs qui doivent SURVIVRE au parse', () => {
         // Omis => absent, donc c'est le défaut de l'étape côté app qui s'applique.
         expect('reparerReleves' in exerciceInputSchema.parse(base)).toBe(false);
     });
+    it('accepte decisionsAmbigus encodé en CHAÎNE (les clients MCP sérialisent différemment)', () => {
+        const attendu = [{ codeReleve: 'R-2223-2304', codeQboRetenu: 'Q-2223-2304' }];
+        const parsed = exerciceInputSchema.parse({ ...base, decisionsAmbigus: JSON.stringify(attendu) });
+        expect(parsed.decisionsAmbigus).toEqual(attendu);
+    });
+    it('accepte reparerReleves en chaîne — et "false" reste FAUX (piège classique de coercition)', () => {
+        expect(exerciceInputSchema.parse({ ...base, reparerReleves: 'false' }).reparerReleves).toBe(false);
+        expect(exerciceInputSchema.parse({ ...base, reparerReleves: 'true' }).reparerReleves).toBe(true);
+        expect(exerciceInputSchema.parse({ ...base, reparerReleves: 'FALSE' }).reparerReleves).toBe(false);
+    });
+    it('tolérant sur la FORME, strict sur le FOND : une chaîne non-JSON ou un contenu invalide est refusé', () => {
+        expect(() => exerciceInputSchema.parse({ ...base, decisionsAmbigus: 'pas du json' })).toThrow();
+        expect(() => exerciceInputSchema.parse({ ...base, decisionsAmbigus: '[{"codeReleve":"R-1"}]' })).toThrow();
+        expect(() => exerciceInputSchema.parse({ ...base, reparerReleves: 'peut-etre' })).toThrow();
+    });
     it('refuse une décision incomplète plutôt que de la laisser passer à moitié', () => {
         expect(() => exerciceInputSchema.parse({ ...base, decisionsAmbigus: [{ codeReleve: 'R-2223-2304' }] })).toThrow();
         expect(() => exerciceInputSchema.parse({ ...base, decisionsAmbigus: [{ codeReleve: '', codeQboRetenu: 'Q-1' }] })).toThrow();

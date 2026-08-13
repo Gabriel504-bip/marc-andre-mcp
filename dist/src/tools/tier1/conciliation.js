@@ -13,6 +13,53 @@ import { truncateList } from '../../format/summarize.js';
  * `exercice` OU `anneeDebut` doit être fourni (jamais les deux exigés à la
  * fois — un seul suffit à identifier l'exercice du 1er juillet au 30 juin).
  */
+/**
+ * 🆕 (2026-08-13) — TOLÉRANCE DE FORMAT côté serveur, sur les deux champs
+ * ajoutés ce jour-là. Les clients MCP ne sérialisent pas les types composés
+ * de la même façon : certains envoient un vrai tableau JSON, d'autres la
+ * même valeur encodée en CHAÎNE ("[{...}]"), et pareil pour les booléens
+ * ("false" au lieu de false). Un schéma strict refusait alors une décision
+ * parfaitement valide avec « Expected array, received string » — l'appelant
+ * n'avait aucun moyen de s'en sortir, le champ étant correct sur le fond.
+ *
+ * Même principe que `normaliserTransactionsExtraites` côté marc-andre-app,
+ * qui accepte trois formes d'extraction : on est TOLÉRANT sur la FORME,
+ * STRICT sur le FOND. Une chaîne est décodée puis validée exactement comme
+ * si elle était arrivée nativement — une valeur réellement invalide est
+ * toujours refusée, jamais devinée ni appliquée à moitié.
+ */
+const booleenTolerant = z.preprocess((v) => {
+    if (typeof v === 'string') {
+        const s = v.trim().toLowerCase();
+        if (s === 'true')
+            return true;
+        if (s === 'false')
+            return false;
+    }
+    return v;
+}, z.boolean());
+const decisionAmbigu = z.object({
+    codeReleve: z.string().min(1).describe('Code de la ligne de relevé ambiguë (ex. "R-2223-2304").'),
+    codeQboRetenu: z
+        .string()
+        .min(1)
+        .describe('Code du candidat QuickBooks RETENU comme correspondance (ex. "Q-2223-2304"). ' +
+        'Doit être l\'un des candidats réels de cette ambiguïté, sinon la décision est refusée.'),
+});
+const decisionsAmbigusTolerant = z.preprocess((v) => {
+    if (typeof v === 'string') {
+        const s = v.trim();
+        if (s === '')
+            return undefined;
+        try {
+            return JSON.parse(s);
+        }
+        catch {
+            return v; // laisse zod refuser proprement, avec un message parlant
+        }
+    }
+    return v;
+}, z.array(decisionAmbigu));
 export const exerciceInputSchema = z
     .object({
     sessionToken,
@@ -63,18 +110,7 @@ export const exerciceInputSchema = z
      * l'appliquer — aucune suppression n'est déclenchée dans QuickBooks par
      * cet outil.
      */
-    decisionsAmbigus: z
-        .array(z.object({
-        codeReleve: z
-            .string()
-            .min(1)
-            .describe('Code de la ligne de relevé ambiguë (ex. "R-2223-2304").'),
-        codeQboRetenu: z
-            .string()
-            .min(1)
-            .describe('Code du candidat QuickBooks RETENU comme correspondance (ex. "Q-2223-2304"). ' +
-            'Doit être l\'un des candidats réels de cette ambiguïté, sinon la décision est refusée.'),
-    }))
+    decisionsAmbigus: decisionsAmbigusTolerant
         .optional()
         .describe('Décisions humaines départageant les ambiguïtés (une ligne de relevé, plusieurs candidats ' +
         'QuickBooks de types différents). Chaque entrée apparie une ligne de relevé au candidat ' +
@@ -88,8 +124,7 @@ export const exerciceInputSchema = z
      * défaut ici : omettre le champ conserve exactement le comportement
      * actuel de chaque étape.
      */
-    reparerReleves: z
-        .boolean()
+    reparerReleves: booleenTolerant
         .optional()
         .describe('Relit (via IA) les relevés dont la balance ne ferme pas avant de comparer. Omis = défaut ' +
         "propre à chaque étape (lecture : non ; CSV de suppression : oui). Coûte du temps et un " +
