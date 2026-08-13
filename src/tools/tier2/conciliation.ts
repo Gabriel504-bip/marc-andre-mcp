@@ -1,4 +1,8 @@
-import { exerciceInputSchema, summarizeConciliation } from '../tier1/conciliation.js';
+import {
+  exerciceInputSchema,
+  summarizeConciliation,
+  TIMEOUT_CONCILIATION_LENTE_MS,
+} from '../tier1/conciliation.js';
 import type { ToolDefinition } from '../types.js';
 
 /**
@@ -26,6 +30,7 @@ export const conciliationExerciceVersEcritures: ToolDefinition = {
     "après l'envoi pour confirmer ce qui est arrivé. Rien n'est publié dans QuickBooks : Gabriel " +
     'poste lui-même depuis le module Écritures.',
   inputSchema: exerciceInputSchema,
+  timeoutMs: TIMEOUT_CONCILIATION_LENTE_MS,
   action: 'conciliation_exercice_vers_ecritures',
   postProcess: (raw) => summarizeConciliation(raw),
 };

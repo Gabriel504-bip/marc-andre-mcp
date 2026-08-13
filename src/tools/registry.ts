@@ -84,7 +84,9 @@ export function registerAllTools(
           const result = def.localHandler
             ? await def.localHandler(input, ctx)
             : await (async () => {
-                const raw = await http.invoke(def.action, input, requestId);
+                const raw = await http.invoke(def.action, input, requestId, {
+                  ...(def.timeoutMs ? { timeoutMs: def.timeoutMs } : {}),
+                });
                 return def.postProcess ? await def.postProcess(raw, input, ctx) : raw;
               })();
 
