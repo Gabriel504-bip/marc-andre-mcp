@@ -16,6 +16,7 @@ import { tier2QboTools } from './tier2/qboAnalyse.js';
 import { tier2FacturationTools } from './tier2/facturation.js';
 import { tier2RelanceTools } from './tier2/relance.js';
 import { tier2ConciliationTools } from './tier2/conciliation.js';
+import { tier2CorrectifsTools } from './tier2/correctifs.js';
 
 /**
  * UNE seule allowlist, codée en dur (§2.2/§2.4). Un outil absent de cette
@@ -43,6 +44,7 @@ export function buildToolList(config: Config): ToolDefinition[] {
     ...tier2FacturationTools,
     ...tier2RelanceTools,
     ...tier2ConciliationTools,
+    ...tier2CorrectifsTools,
   ];
 }
 
