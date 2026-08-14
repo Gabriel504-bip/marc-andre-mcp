@@ -143,8 +143,32 @@ const MAX_ECHANTILLON = 8;
  * 60 s couvre le cas réel observé (2 relevés BMO de ~10 pages) tout en
  * restant sous la limite d'exécution d'une fonction Vercel.
  *
- * `ma_conciliation_exercice` (lecture pure) garde le défaut : elle est censée
- * répondre vite, et si elle traîne c'est un signal, pas à masquer.
+ * 🔄 RÉVISÉ (2026-08-14) — `ma_conciliation_exercice` passe elle aussi à 60 s.
+ *
+ * La règle précédente disait : « lecture pure, elle est censée répondre vite,
+ * et si elle traîne c'est un signal, pas à masquer ». Le raisonnement était
+ * juste, mais il supposait un CACHE QBO CHAUD. À froid — après un
+ * `forcerRelecture`, ou simplement après expiration — l'outil relit tout le
+ * grand livre de l'exercice (3 000+ lignes sur le dossier réel) PLUS les
+ * relevés mensuels : 15 à 60 s, légitimement.
+ *
+ * Ce qui s'est passé le 2026-08-14 : chaque appel aboutissait côté serveur
+ * (HTTP 200 dans les journaux Vercel) mais le MCP raccrochait à 15 s.
+ * L'appelant, ne voyant jamais de réponse, réessayait — et chaque tentative
+ * relançait une lecture complète. Résultat : throttling Microsoft 365 (429),
+ * puis écran de connexion cassé pour Gabriel. Le garde-fou censé « ne pas
+ * masquer un signal » a produit une boucle de charge bien pire que le
+ * ralentissement qu'il signalait.
+ *
+ * 60 s couvre le cas à froid mesuré et reste sous la limite d'exécution d'une
+ * fonction Vercel (la route côté app est déjà à `maxDuration = 60`). Un appel
+ * qui dépasse 60 s reste une vraie erreur — le signal existe toujours, il est
+ * juste placé au bon seuil.
+ *
+ * ⚠️ Le vrai correctif reste à faire : cette route devrait rendre un `jobId`
+ * immédiatement et travailler en arrière-plan (comme `qbo_analyse_*`). Tant
+ * que tout tient dans une requête, un dossier plus gros repassera au-dessus
+ * de 60 s.
  */
 export const TIMEOUT_CONCILIATION_LENTE_MS = 60_000;
 /**
@@ -203,6 +227,7 @@ export const conciliationExercice = {
         'les mois écartés avec leur cause. ⚠️ Les catégories volumineuses sont réduites à un ' +
         'échantillon — jamais le dump complet (voir avertissementTroncature).',
     inputSchema: exerciceInputSchema,
+    timeoutMs: TIMEOUT_CONCILIATION_LENTE_MS,
     action: 'conciliation_exercice',
     postProcess: (raw) => summarizeConciliation(raw),
 };

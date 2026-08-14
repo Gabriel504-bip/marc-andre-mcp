@@ -74,8 +74,32 @@ describe('timeouts par outil — les étapes lentes ne meurent plus à 15 s', ()
     expect(TIMEOUT_CONCILIATION_LENTE_MS).toBeGreaterThan(15000);
   });
 
-  it('la lecture pure garde le défaut global (un ralentissement est un signal)', () => {
-    expect(conciliationExercice.timeoutMs).toBeUndefined();
+  // 🔄 RÉVISÉ (2026-08-14). Ce test affirmait l'inverse : « la lecture pure
+  // garde le défaut global (un ralentissement est un signal) ». La décision
+  // était défendable, mais elle supposait un cache QBO chaud. À froid,
+  // `conciliation_exercice` relit tout le grand livre de l'exercice (3 000+
+  // lignes sur le dossier réel) et prend 15 à 60 s.
+  //
+  // Le 2026-08-14, chaque appel aboutissait côté serveur (HTTP 200 dans les
+  // journaux Vercel) mais le MCP raccrochait à 15 s. L'appelant réessayait,
+  // chaque tentative relançant une lecture complète -> throttling Microsoft
+  // 365 (429) -> écran de connexion cassé. Le garde-fou a coûté plus cher que
+  // le ralentissement qu'il signalait.
+  //
+  // Le signal existe toujours : il est juste placé à 60 s, seuil au-delà
+  // duquel c'est une vraie panne (la route côté app est à maxDuration = 60).
+  it('la lecture pure a AUSSI un délai long — elle relit le grand livre à froid', () => {
+    expect(conciliationExercice.timeoutMs).toBe(TIMEOUT_CONCILIATION_LENTE_MS);
+  });
+
+  it('les 4 outils de conciliation partagent le même délai — aucun oublié', () => {
+    for (const t of [conciliationExercice, conciliationExerciceCsv, conciliationExerciceExcel, conciliationExerciceVersEcritures]) {
+      expect(t.timeoutMs, `${t.name} devrait porter le délai long`).toBe(TIMEOUT_CONCILIATION_LENTE_MS);
+    }
+  });
+
+  it('le délai reste sous la limite d\'exécution Vercel (60 s)', () => {
+    expect(TIMEOUT_CONCILIATION_LENTE_MS).toBeLessThanOrEqual(60_000);
   });
 
   it('les 4 outils partagent le MÊME schéma — un seul endroit à corriger', () => {
