@@ -94,3 +94,21 @@ describe('timeouts par outil — les étapes lentes ne meurent plus à 15 s', ()
         }
     });
 });
+// 🐞 2026-08-14 — la tolérance de format n'avait été posée que sur
+// `reparerReleves`. En production, « Expected boolean, received string at
+// rechargerQbo » bloquait toute relecture QuickBooks forcée, sans recours.
+describe('tolérance de format sur TOUS les booléens du schéma', () => {
+    for (const champ of ['rechargerQbo', 'inclureMoisNonFermes', 'reparerReleves']) {
+        it(`${champ} accepte le booléen natif ET la chaîne`, () => {
+            const base = { sessionToken: 'abcdefgh-1234', exercice: '2025-2026' };
+            expect(exerciceInputSchema.parse({ ...base, [champ]: true })[champ]).toBe(true);
+            expect(exerciceInputSchema.parse({ ...base, [champ]: 'true' })[champ]).toBe(true);
+            expect(exerciceInputSchema.parse({ ...base, [champ]: 'false' })[champ]).toBe(false);
+        });
+        it(`${champ} refuse toujours une valeur réellement invalide`, () => {
+            const base = { sessionToken: 'abcdefgh-1234', exercice: '2025-2026' };
+            expect(() => exerciceInputSchema.parse({ ...base, [champ]: 'peut-etre' })).toThrow();
+            expect(() => exerciceInputSchema.parse({ ...base, [champ]: 42 })).toThrow();
+        });
+    }
+});

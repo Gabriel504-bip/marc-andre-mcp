@@ -84,15 +84,21 @@ export const exerciceInputSchema = z
       .default('Chequing(-952)')
       .optional()
       .describe('Compte bancaire à concilier.'),
-    rechargerQbo: z
-      .boolean()
+    // 🐞 CORRECTIF (2026-08-14) — `booleenTolerant` et non `z.boolean()`.
+    // La tolérance de format avait été ajoutée le 2026-08-13 pour
+    // `reparerReleves` uniquement ; ces deux champs-ci étaient restés en
+    // booléen strict. Résultat constaté en production : un client MCP qui
+    // sérialise `true` en chaîne se faisait refuser avec « Expected boolean,
+    // received string at rechargerQbo », sans aucun recours — impossible de
+    // forcer une relecture QuickBooks après avoir supprimé des écritures.
+    // Même principe qu'ailleurs : TOLÉRANT sur la forme, STRICT sur le fond.
+    rechargerQbo: booleenTolerant
       .default(false)
       .optional()
       .describe(
         "Force un rechargement des données QuickBooks avant la comparaison plutôt que d'utiliser le cache."
       ),
-    inclureMoisNonFermes: z
-      .boolean()
+    inclureMoisNonFermes: booleenTolerant
       .default(false)
       .optional()
       .describe(
