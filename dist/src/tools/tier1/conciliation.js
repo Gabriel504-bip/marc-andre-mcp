@@ -160,17 +160,30 @@ const MAX_ECHANTILLON = 8;
  * masquer un signal » a produit une boucle de charge bien pire que le
  * ralentissement qu'il signalait.
  *
- * 60 s couvre le cas à froid mesuré et reste sous la limite d'exécution d'une
- * fonction Vercel (la route côté app est déjà à `maxDuration = 60`). Un appel
- * qui dépasse 60 s reste une vraie erreur — le signal existe toujours, il est
- * juste placé au bon seuil.
+ * 🔄 RÉVISÉ À NOUVEAU (2026-08-14, soirée) — 60 s → 300 s.
+ *
+ * Les 60 s ne suffisaient toujours pas : sur cache QBO froid ET pendant un
+ * ralentissement SharePoint (chaque lecture de fichier partant en retry avec
+ * backoff), la lecture complète dépassait aussi les 60 s. La fonction Vercel
+ * était alors tuée AVANT d'avoir écrit le cache — donc l'appel suivant
+ * repartait à froid, et ainsi de suite. Une boucle sans issue : le seul moyen
+ * de réchauffer le cache était de réussir un appel, et aucun appel ne pouvait
+ * réussir.
+ *
+ * Gabriel est passé au plan Vercel Pro le 2026-08-14. La route côté app porte
+ * DÉJÀ `maxDuration = 300` (elle était écrite pour, mais le plan Hobby la
+ * plafonnait silencieusement à 60 s). 300 s est le maximum d'une fonction
+ * standard sur Pro : les deux couches sont donc alignées au même plafond.
+ *
+ * Le signal existe toujours — il est simplement placé là où un dépassement
+ * signifie vraiment une panne, et non « le dossier est gros et le cache est
+ * froid ».
  *
  * ⚠️ Le vrai correctif reste à faire : cette route devrait rendre un `jobId`
- * immédiatement et travailler en arrière-plan (comme `qbo_analyse_*`). Tant
- * que tout tient dans une requête, un dossier plus gros repassera au-dessus
- * de 60 s.
+ * immédiatement et travailler en arrière-plan (comme `qbo_analyse_*`). 300 s
+ * repousse le plafond, il ne le supprime pas.
  */
-export const TIMEOUT_CONCILIATION_LENTE_MS = 60_000;
+export const TIMEOUT_CONCILIATION_LENTE_MS = 300_000;
 /**
  * Élagage générique : toute liste volumineuse (catégories de lignes,
  * mois détaillés, etc.) est réduite à un échantillon annoncé — jamais un

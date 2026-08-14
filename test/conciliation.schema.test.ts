@@ -98,8 +98,13 @@ describe('timeouts par outil — les étapes lentes ne meurent plus à 15 s', ()
     }
   });
 
-  it('le délai reste sous la limite d\'exécution Vercel (60 s)', () => {
-    expect(TIMEOUT_CONCILIATION_LENTE_MS).toBeLessThanOrEqual(60_000);
+  // Aligné sur `maxDuration = 300` de la route côté marc-andre-app, qui est le
+  // maximum d'une fonction standard sur le plan Vercel Pro (Gabriel y est
+  // passé le 2026-08-14). Sur Hobby, le 300 de la route était plafonné à 60 s
+  // en silence — c'est ce qui rendait la conciliation à froid impossible.
+  it('le délai est aligné sur maxDuration de la route (300 s, plafond Vercel Pro)', () => {
+    expect(TIMEOUT_CONCILIATION_LENTE_MS).toBe(300_000);
+    expect(TIMEOUT_CONCILIATION_LENTE_MS).toBeLessThanOrEqual(300_000);
   });
 
   it('les 4 outils partagent le MÊME schéma — un seul endroit à corriger', () => {
