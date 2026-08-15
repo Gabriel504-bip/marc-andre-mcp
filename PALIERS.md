@@ -30,7 +30,21 @@ l'app pour l'instant).
 | `ma_qbo_analyse_preparer` / `_executer` / `_progression` | lance une analyse QBO (lecture QBO + écriture de propositions dans marc-andre-app) | oui — n'écrit rien dans QuickBooks |
 | `ma_facturation_apercu` / `ma_facturation_rapprocher_executer` | rapprochement de facturation, déterministe | oui — persistance uniquement côté marc-andre-app, pas QBO |
 | `ma_relance_preparer` / `ma_relance_executer` | **envoie un vrai courriel** (sauf si SAFE_MODE_EMAIL actif) | **non** — irréversible, garde-fou anti-doublon 24h |
-| `ma_ecriture_manuelle_creer` (2026-08-15, corrigé le même jour après 7 essais réels) | crée 1 à 25 écritures de journal manuelles libres par appel et les **publie réellement dans QuickBooks** (ex. DAS fédéral). CSV séparé par virgules, dates JJ/MM/AAAA, `timeoutMs` 300 s. | oui en pratique (annulable manuellement dans QuickBooks) mais PUBLIÉE directement — pas seulement déposée en révision comme la conciliation. Simulation VRAIE par défaut + `reference` obligatoire PAR écriture (idempotence) + refuse tout compte GL manquant plutôt que d'en créer un. Échec d'un élément du lot n'affecte pas les autres. |
+| `ma_ecriture_manuelle_creer` (2026-08-15, révisé le même jour — correctif architectural après 2 publications réelles non désirées) | crée 1 à 25 écritures de journal manuelles libres par appel (ex. DAS fédéral) et les **dépose dans le module Écritures de marc-andre-app** (comme `ma_conciliation_exercice_vers_ecritures`) — ne publie JAMAIS dans QuickBooks elle-même. CSV séparé par virgules, dates JJ/MM/AAAA, `timeoutMs` 300 s. | oui — aucun effet QuickBooks direct. Simulation VRAIE par défaut + `reference` obligatoire PAR écriture (idempotence) + refuse tout compte GL manquant plutôt que d'en créer un. Échec d'un élément du lot n'affecte pas les autres. |
+| `ma_ecriture_manuelle_publier` (2026-08-15, ajouté le même jour, demande explicite de Gabriel) | publie **réellement dans QuickBooks** des écritures déjà déposées par l'outil ci-dessus (par `reference`), en réutilisant EXACTEMENT la même fonction que le clic humain « Approuver » (`publierEcritureManuelleMultiligne`, `lib/qbo-analysis.js`) — aucune logique QBO nouvelle. | **non — irréversible.** Voir « Amendement — `ma_ecriture_manuelle_publier` » ci-dessous : `confirmation` forcée à `false` sauf valeur booléenne EXACTE `true` (imposée après le spread côté passerelle) + `QBO_WRITE_ENABLED` (hors de portée de l'agent) + idempotent par référence (une référence déjà publiée n'est jamais republiée). |
+
+### Amendement — `ma_ecriture_manuelle_publier` (2026-08-15)
+
+Le geste « publier réellement dans QuickBooks » (`qbo-jobs/review` action
+`approve`) est décrit ci-dessous comme jamais un outil MCP. `ma_ecriture_
+manuelle_publier` en est une exception délibérée, demandée explicitement par
+Gabriel le 2026-08-15 (même précédent que l'amendement déjà en place pour
+`ma_correctifs_appliquer`, qui permet la suppression réelle d'écritures QBO
+depuis un outil MCP) : la frontière ne disparaît pas, elle se déplace derrière
+deux verrous indépendants (`confirmation` forcée fausse par défaut côté
+passerelle + `QBO_WRITE_ENABLED` hors de portée de l'agent), et ne s'applique
+QU'à des écritures déjà déposées et visibles dans le module Écritures — jamais
+à une écriture arbitraire non revue.
 
 ## Palier 3 — jamais un outil MCP exécutable (aucune exception)
 
