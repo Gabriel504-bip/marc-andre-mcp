@@ -106,4 +106,69 @@ export const ecritureManuelleCreer = {
     action: 'ecriture_manuelle_creer',
     timeoutMs: TIMEOUT_CONCILIATION_LENTE_MS,
 };
-export const tier2EcritureManuelleTools = [ecritureManuelleCreer];
+/**
+ * Publication RÉELLE, sur demande explicite de Gabriel dans une session,
+ * d'écriture(s) DÉJÀ déposée(s) dans le module Écritures par
+ * `ma_ecriture_manuelle_creer` — mandat 2026-08-15 (« je dois faire que
+ * Claude puisse aussi publier directement dans QuickBook, sur demande »).
+ *
+ * Amendement ASSUME de PALIERS.md (même précédent que `ma_correctifs_
+ * appliquer`) : republie EXACTEMENT la même fonction que le clic humain
+ * « Approuver » dans /app/ecritures (publierEcritureManuelleMultiligne,
+ * lib/qbo-analysis.js côté marc-andre-app) — même résolution de comptes
+ * stricte (refuse un compte manquant plutôt que d'en créer un), même
+ * relecture de vérification après création. Aucune nouvelle logique de
+ * construction de JournalEntry : zéro divergence possible entre le chemin
+ * humain et ce chemin agent.
+ *
+ * Deux verrous indépendants avant toute écriture réelle dans QuickBooks :
+ *   1. `confirmation` : FAUX par défaut, forcé après le spread côté
+ *      marc-andre-app — seule la valeur booléenne `true` explicite publie
+ *      réellement. Toute autre valeur ne renvoie qu'un aperçu (comptes,
+ *      montants, dates de ce qui SERAIT publié), rien n'est touché dans
+ *      QuickBooks.
+ *   2. QBO_WRITE_ENABLED (variable Vercel), hors de portée de l'agent,
+ *      vérifié côté serveur avant toute publication.
+ *
+ * Idempotent par référence : une référence déjà publiée renvoie son
+ * `qboJournalEntryId` existant sans jamais republier. Un échec sur une
+ * référence du lot n'interrompt pas les autres.
+ */
+const confirmationTolerante = z.preprocess((v) => {
+    if (v === true)
+        return true;
+    if (typeof v === 'string' && v.trim().toLowerCase() === 'true')
+        return true;
+    return false; // toute valeur inattendue ou absente -> aperçu seul, jamais l'inverse
+}, z.boolean());
+const ecritureManuellePublierInput = z.object({
+    sessionToken,
+    references: z
+        .array(z.string().min(1))
+        .min(1)
+        .max(25)
+        .describe("Références (mêmes valeurs que 'reference' passées à ma_ecriture_manuelle_creer) des " +
+        "écritures déjà déposées dans le module Écritures, à publier réellement dans QuickBooks. " +
+        "1 à 25 par appel."),
+    confirmation: confirmationTolerante
+        .default(false)
+        .describe("FAUX (défaut) = aperçu de ce qui SERAIT publié, rien n'est touché dans QuickBooks. Mettre " +
+        "VRAI publie RÉELLEMENT et IRRÉVERSIBLEMENT ces écritures dans QuickBooks — à utiliser " +
+        "seulement quand Gabriel le demande explicitement pour ces références précises."),
+});
+export const ecritureManuellePublier = {
+    name: 'ma_ecriture_manuelle_publier',
+    tier: 2,
+    description: "Publie RÉELLEMENT dans QuickBooks une ou plusieurs écritures DÉJÀ déposées dans le module " +
+        "Écritures via ma_ecriture_manuelle_creer (identifiées par leur `reference`). Republie " +
+        "exactement le même mécanisme que le clic humain « Approuver » dans /app/ecritures — même " +
+        "validation de comptes, même vérification post-création. IRRÉVERSIBLE et APERÇU PAR DÉFAUT : " +
+        "rien n'est publié tant que `confirmation` n'est pas explicitement VRAI. N'utilise ce champ " +
+        "VRAI que sur demande explicite de Gabriel pour ces références précises, jamais de ta propre " +
+        "initiative. Une référence déjà publiée est renvoyée telle quelle (idempotent, jamais " +
+        "republiée). Nécessite QBO_WRITE_ENABLED actif côté serveur (sinon erreur explicite).",
+    inputSchema: ecritureManuellePublierInput,
+    action: 'ecriture_manuelle_publier',
+    timeoutMs: TIMEOUT_CONCILIATION_LENTE_MS,
+};
+export const tier2EcritureManuelleTools = [ecritureManuelleCreer, ecritureManuellePublier];
