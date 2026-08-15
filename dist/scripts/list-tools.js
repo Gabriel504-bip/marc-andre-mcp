@@ -12,6 +12,8 @@ import { tier2QboTools } from '../src/tools/tier2/qboAnalyse.js';
 import { tier2FacturationTools } from '../src/tools/tier2/facturation.js';
 import { tier2RelanceTools } from '../src/tools/tier2/relance.js';
 import { tier2ConciliationTools } from '../src/tools/tier2/conciliation.js';
+import { tier2CorrectifsTools } from '../src/tools/tier2/correctifs.js';
+import { tier2EcritureManuelleTools } from '../src/tools/tier2/ecritureManuelle.js';
 const all = [
     ...tier1ClientTools,
     ...tier1EcrituresTools,
@@ -22,6 +24,8 @@ const all = [
     ...tier2FacturationTools,
     ...tier2RelanceTools,
     ...tier2ConciliationTools,
+    ...tier2CorrectifsTools,
+    ...tier2EcritureManuelleTools,
 ];
 for (const t of all) {
     console.log(`\n### ${t.name}  [palier ${t.tier}${t.requiresAdmin ? ', requireAdmin' : ''}]`);
