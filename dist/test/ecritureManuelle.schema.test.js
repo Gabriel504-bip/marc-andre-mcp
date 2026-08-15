@@ -62,9 +62,13 @@ describe('ma_ecriture_manuelle_creer — métadonnées', () => {
         expect(ecritureManuelleCreer.tier).toBe(2);
         expect(ecritureManuelleCreer.timeoutMs).toBe(300_000);
     });
-    it('la description avertit du séparateur virgule, du format de date et de la simulation par défaut', () => {
-        expect(ecritureManuelleCreer.description).toMatch(/SIMULATION PAR D[ÉE]FAUT/i);
+    it('la description avertit du séparateur virgule, du format de date et de l\'aperçu par défaut', () => {
+        expect(ecritureManuelleCreer.description).toMatch(/APER[ÇC]U PAR D[ÉE]FAUT/i);
         expect(ecritureManuelleCreer.description).toMatch(/JJ\/MM\/AAAA/);
         expect(ecritureManuelleCreer.description).toMatch(/VIRGULES/i);
+    });
+    it("la description est explicite : dépose dans le module Écritures, ne publie JAMAIS directement dans QuickBooks", () => {
+        expect(ecritureManuelleCreer.description).toMatch(/MODULE ÉCRITURES/i);
+        expect(ecritureManuelleCreer.description).toMatch(/jamais directement dans QuickBooks/i);
     });
 });
