@@ -63,16 +63,22 @@ const ecritureItem = z.object({
         .string()
         .min(1)
         .describe('CSV séparé par des VIRGULES (pas des points-virgules), UNE seule date pour tout le ' +
-        "fichier. En-tête exact : Date,Compte,Débit,Crédit,Description,Memo (Description et Memo " +
-        "optionnels mais les 4 premières colonnes obligatoires). Date au format JJ/MM/AAAA (ex. " +
-        "27/01/2021) — une date ISO (AAAA-MM-JJ) est ILLISIBLE pour ce parseur. Lignes équilibrées " +
-        "(total débit = total crédit) — peut avoir PLUS de 2 comptes (contrairement à une écriture " +
-        "de conciliation classique). Chaque nom de compte doit correspondre EXACTEMENT à un compte " +
-        "existant du plan comptable QuickBooks du client (voir ma_qbo_listes_reference) — aucun " +
-        "compte manquant ne sera créé. Aucune colonne de code de taxe : une écriture de journal " +
-        "QuickBooks n'applique de toute façon jamais un code de taxe (limitation QuickBooks/du " +
-        "moteur existant, pas de cet outil) — inscris le montant de taxe directement comme une " +
-        "ligne débit/crédit sur le bon compte si nécessaire."),
+        "fichier. En-tête exact : Date,Compte,Débit,Crédit,Description,Memo,Code de taxe " +
+        "(Description, Memo et Code de taxe optionnels mais les 4 premières colonnes obligatoires). " +
+        "Date au format JJ/MM/AAAA (ex. 27/01/2021) — une date ISO (AAAA-MM-JJ) est ILLISIBLE pour " +
+        "ce parseur. Lignes équilibrées (total débit = total crédit) — peut avoir PLUS de 2 comptes " +
+        "(contrairement à une écriture de conciliation classique). Chaque nom de compte doit " +
+        "correspondre EXACTEMENT à un compte existant du plan comptable QuickBooks du client (voir " +
+        "ma_qbo_listes_reference) — aucun compte manquant ne sera créé. Une ligne touchant un compte " +
+        "Comptes clients/Comptes fournisseurs reçoit automatiquement l'entité générique « Client " +
+        "inconnu »/« Fournisseur inconnu » (QuickBooks l'exige, aucune action requise de ta part). " +
+        "Colonne « Code de taxe » (optionnelle, par ligne) : nom EXACT d'un code de taxe QuickBooks " +
+        "(voir ma_qbo_listes_reference) — QuickBooks calcule et applique la taxe automatiquement sur " +
+        "cette ligne, exactement comme depuis son propre écran (ce n'était PAS supporté avant le " +
+        "2026-08-15 : une affirmation précédente disait à tort qu'une écriture de journal QuickBooks " +
+        "n'applique jamais de code de taxe — c'était une limitation de ce moteur, pas de QuickBooks). " +
+        "⚠️ Non éprouvé en volume : teste sur UNE écriture d'abord (simulation puis réelle) avant " +
+        "d'appliquer un code de taxe à un gros lot."),
 });
 const ecritureManuelleCreerInput = z.object({
     sessionToken,

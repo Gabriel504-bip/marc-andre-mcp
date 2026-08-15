@@ -62,6 +62,14 @@ describe('ma_ecriture_manuelle_creer — csvText obligatoire par écriture', () 
         expect(() => ecritureManuelleCreer.inputSchema.parse({ ...base, ecritures: [{ reference: 'r' }] })).toThrow();
     });
 });
+describe('ma_ecriture_manuelle_creer — code de taxe (correctif 2026-08-15)', () => {
+    it("le champ csvText documente la colonne optionnelle Code de taxe et corrige l'ancienne fausse affirmation", () => {
+        const csvTextDesc = ecritureManuelleCreer.inputSchema.shape.ecritures.element.shape.csvText.description;
+        expect(csvTextDesc).toMatch(/Code de taxe/i);
+        expect(csvTextDesc).toMatch(/n'était PAS supporté avant le 2026-08-15/i);
+        expect(csvTextDesc).not.toMatch(/n'applique de toute façon jamais un code de taxe/i);
+    });
+});
 describe('ma_ecriture_manuelle_creer — métadonnées', () => {
     it('est en palier 2 et porte un délai long (300 s, pas le défaut 15 s)', () => {
         expect(ecritureManuelleCreer.tier).toBe(2);
