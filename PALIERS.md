@@ -30,7 +30,7 @@ l'app pour l'instant).
 | `ma_qbo_analyse_preparer` / `_executer` / `_progression` | lance une analyse QBO (lecture QBO + écriture de propositions dans marc-andre-app) | oui — n'écrit rien dans QuickBooks |
 | `ma_facturation_apercu` / `ma_facturation_rapprocher_executer` | rapprochement de facturation, déterministe | oui — persistance uniquement côté marc-andre-app, pas QBO |
 | `ma_relance_preparer` / `ma_relance_executer` | **envoie un vrai courriel** (sauf si SAFE_MODE_EMAIL actif) | **non** — irréversible, garde-fou anti-doublon 24h |
-| `ma_ecriture_manuelle_creer` (2026-08-15) | crée une écriture de journal manuelle libre et la **publie réellement dans QuickBooks** (ex. DAS fédéral) | oui en pratique (annulable manuellement dans QuickBooks) mais PUBLIÉE directement — pas seulement déposée en révision comme la conciliation. Simulation VRAIE par défaut + `reference` obligatoire (idempotence) + refuse tout compte GL manquant plutôt que d'en créer un. |
+| `ma_ecriture_manuelle_creer` (2026-08-15, corrigé le même jour après 7 essais réels) | crée 1 à 25 écritures de journal manuelles libres par appel et les **publie réellement dans QuickBooks** (ex. DAS fédéral). CSV séparé par virgules, dates JJ/MM/AAAA, `timeoutMs` 300 s. | oui en pratique (annulable manuellement dans QuickBooks) mais PUBLIÉE directement — pas seulement déposée en révision comme la conciliation. Simulation VRAIE par défaut + `reference` obligatoire PAR écriture (idempotence) + refuse tout compte GL manquant plutôt que d'en créer un. Échec d'un élément du lot n'affecte pas les autres. |
 
 ## Palier 3 — jamais un outil MCP exécutable (aucune exception)
 
