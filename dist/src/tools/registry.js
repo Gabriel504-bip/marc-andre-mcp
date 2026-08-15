@@ -10,6 +10,7 @@ import { tier2FacturationTools } from './tier2/facturation.js';
 import { tier2RelanceTools } from './tier2/relance.js';
 import { tier2ConciliationTools } from './tier2/conciliation.js';
 import { tier2CorrectifsTools } from './tier2/correctifs.js';
+import { tier2EcritureManuelleTools } from './tier2/ecritureManuelle.js';
 /**
  * UNE seule allowlist, codée en dur (§2.2/§2.4). Un outil absent de cette
  * table n'existe pas pour Claude — pas de 404 en aval à masquer, il n'est
@@ -36,6 +37,7 @@ export function buildToolList(config) {
         ...tier2RelanceTools,
         ...tier2ConciliationTools,
         ...tier2CorrectifsTools,
+        ...tier2EcritureManuelleTools,
     ];
 }
 function checkClientAllowlist(config, input) {
