@@ -9,6 +9,7 @@ import type { ToolContext, ToolDefinition } from './types.js';
 import { tier1ClientTools } from './tier1/clients.js';
 import { tier1EcrituresTools } from './tier1/ecritures.js';
 import { tier1QuickbooksTools } from './tier1/quickbooks.js';
+import { tier1RevenusSansTaxeTools } from './tier1/revenusSansTaxe.js';
 import { tier1AdminTools } from './tier1/admin.js';
 import { tier1ConciliationTools } from './tier1/conciliation.js';
 
@@ -34,6 +35,7 @@ export function buildToolList(config: Config): ToolDefinition[] {
     ...tier1ClientTools,
     ...tier1EcrituresTools,
     ...tier1QuickbooksTools,
+    ...tier1RevenusSansTaxeTools,
     ...tier1AdminTools,
     ...tier1ConciliationTools,
   ];
