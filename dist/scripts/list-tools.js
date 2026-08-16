@@ -18,6 +18,7 @@ import { tier2EcritureManuelleTools } from '../src/tools/tier2/ecritureManuelle.
 import { tier2QboTaxeTransactionTools } from '../src/tools/tier2/qboTaxeTransaction.js';
 import { tier2QboTaxeLotTools } from '../src/tools/tier2/qboTaxeLot.js';
 import { tier2QboTaxeLotInverserTools } from '../src/tools/tier2/qboTaxeLotInverser.js';
+import { tier2QboTaxeSensTools } from '../src/tools/tier2/qboTaxeSens.js';
 const all = [
     ...tier1ClientTools,
     ...tier1EcrituresTools,
@@ -34,6 +35,7 @@ const all = [
     ...tier2QboTaxeTransactionTools,
     ...tier2QboTaxeLotTools,
     ...tier2QboTaxeLotInverserTools,
+    ...tier2QboTaxeSensTools,
 ];
 for (const t of all) {
     console.log(`\n### ${t.name}  [palier ${t.tier}${t.requiresAdmin ? ', requireAdmin' : ''}]`);
