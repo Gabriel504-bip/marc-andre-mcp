@@ -14,6 +14,7 @@ import { tier2RelanceTools } from '../src/tools/tier2/relance.js';
 import { tier2ConciliationTools } from '../src/tools/tier2/conciliation.js';
 import { tier2CorrectifsTools } from '../src/tools/tier2/correctifs.js';
 import { tier2EcritureManuelleTools } from '../src/tools/tier2/ecritureManuelle.js';
+import { tier2QboTaxeTransactionTools } from '../src/tools/tier2/qboTaxeTransaction.js';
 
 const all = [
   ...tier1ClientTools,
@@ -27,6 +28,7 @@ const all = [
   ...tier2ConciliationTools,
   ...tier2CorrectifsTools,
   ...tier2EcritureManuelleTools,
+  ...tier2QboTaxeTransactionTools,
 ];
 
 for (const t of all) {
