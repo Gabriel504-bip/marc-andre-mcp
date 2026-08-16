@@ -30,6 +30,13 @@ const revenusSansTaxeInput = z.object({
         .string()
         .regex(/^\d{4}-\d{2}-\d{2}$/)
         .describe('Fin de la période, au format AAAA-MM-JJ (inclus).'),
+    detail: z
+        .boolean()
+        .default(false)
+        .describe('FAUX (défaut) = réponse COMPACTE : compteurs, montants et motifs, plus un échantillon de 15 ' +
+        'transactions. Suffisant pour décider, et ne sature pas la session. VRAI = liste complète, ' +
+        "réponse volumineuse (un seul mois a déjà produit 76 700 caractères) — à n'utiliser que sur " +
+        'une période courte.'),
 });
 export const qboRevenusSansTaxe = {
     name: 'ma_qbo_revenus_sans_taxe',
@@ -43,7 +50,8 @@ export const qboRevenusSansTaxe = {
         "(code exonéré/détaxé). Ne modifie RIEN dans QuickBooks. ⚠️ Ne tranche pas : une clinique a de " +
         "vrais revenus exonérés — le motif explique pourquoi la taxe est absente, il ne dit pas que " +
         "c'est une erreur. Si la réponse indique `tronque: true`, la liste est incomplète : découpe la " +
-        'période en tranches plus courtes. La réponse contient un bloc `couverture` (types examinés, ' +
+        'période en tranches plus courtes. Réponse COMPACTE par défaut (`detail: true` pour la liste ' +
+        'intégrale). La réponse contient un bloc `couverture` (types examinés, ' +
         'nombre de transactions LUES par type, nombre sans taxe par type) qui permet de recouper la ' +
         "complétude avec un rapport QuickBooks plutôt que d'avoir à la croire sur parole.",
     inputSchema: revenusSansTaxeInput,
