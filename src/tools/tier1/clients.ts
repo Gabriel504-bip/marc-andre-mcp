@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { sessionToken, pagination } from '../../schemas/common.js';
 import { pickSections } from '../../format/summarize.js';
 import type { ToolDefinition } from '../types.js';
-import { TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS } from '../types.js';
 
 /**
  * §3.1 outils 1-3 du rapport. `ma_chercher_client` est le point d'entrée
@@ -88,7 +87,6 @@ export const ficheClient: ToolDefinition = {
   }),
   action: 'fiche_client',
   postProcess: (raw, input: any) => pickSections(raw as Record<string, unknown>, input.sections, SECTION_KEYS),
-  timeoutMs: TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS,
 };
 
 export const tier1ClientTools = [chercherClient, listerClients, ficheClient];

@@ -61,7 +61,14 @@ export function loadConfig(): Config {
     maAgentId: optional('MA_AGENT_ID', 'claude-cowork-agent'),
     allowTier2: bool('MA_ALLOW_TIER2', false),
     agentEnabled: bool('AGENT_ENABLED', true),
-    timeoutMs: int('MA_TIMEOUT_MS', 15000),
+    // 🆕 (2026-08-16, demande de Gabriel) — 300 s, aligné sur la durée
+    // maximale réelle d'une fonction Vercel Pro (maxDuration = 300 côté
+    // marc-andre-app). Un client qui abandonne AVANT le serveur est le pire
+    // des cas : le travail se termine et se persiste correctement, mais
+    // l'appelant croit à un échec et risque de rejouer l'appel. Aligner les
+    // deux plafonds supprime cette classe entière de faux échecs.
+    // Reste surchargeable par MA_TIMEOUT_MS.
+    timeoutMs: int('MA_TIMEOUT_MS', 300_000),
     cacheTtlMs: int('MA_CACHE_TTL_MS', 5 * 60 * 1000),
     logFile: optional('MA_LOG_FILE', './agent-actions.jsonl'),
     allowedClients: process.env.AGENT_ALLOWED_CLIENTS

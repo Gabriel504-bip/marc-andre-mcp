@@ -30,8 +30,8 @@ export interface ToolDefinition<TInput = any, TOutput = any> {
   postProcess?: (raw: unknown, input: TInput, ctx: ToolContext) => TOutput | Promise<TOutput>;
   /**
    * 🆕 (2026-08-13) — délai réseau PROPRE à cet outil, en millisecondes,
-   * quand le défaut global (MA_TIMEOUT_MS, 15 000 ms) est structurellement
-   * trop court. Certaines étapes de marc-andre-app dépassent VOLONTAIREMENT
+   * quand le défaut global (MA_TIMEOUT_MS, 300 000 ms depuis le 2026-08-16)
+   * ne convient pas. Certaines étapes de marc-andre-app dépassent VOLONTAIREMENT
    * 15 s : la conciliation d'exercice relit jusqu'à 2 relevés par appel (un
    * appel IA chacun) avant de produire son CSV, précisément pour ne jamais
    * bâtir un CSV de suppression sur un relevé incomplet.
@@ -54,18 +54,3 @@ export interface ToolDefinition<TInput = any, TOutput = any> {
   localHandler?: (input: TInput, ctx: ToolContext) => Promise<TOutput>;
 }
 
-/**
- * 🆕 (2026-08-16) — délai des LECTURES qui balaient un dossier volumineux.
- *
- * 60 s, pas 300 s : ces routes sont en lecture seule et doivent rester
- * franchement rapides. Le but n'est PAS de tolérer une route lente, c'est
- * d'éviter qu'un cabinet chargé fasse échouer une lecture parfaitement
- * normale à 15 s pile — symptôme observé en production (ma_ecritures et
- * ma_qbo_statut échouant systématiquement à exactement 15 s sur un dossier
- * précis, ce qui ressemblait à tort à un verrou ou à un job bloqué).
- *
- * La vraie correction du volume est côté marc-andre-app (ne plus télécharger
- * le détail des jobs de TOUS les clients quand un seul est demandé) ; cette
- * marge n'est que le filet de sécurité qui va avec.
- */
-export const TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS = 60_000;

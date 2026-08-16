@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { sessionToken } from '../../schemas/common.js';
 import { stripRawFields } from '../../format/summarize.js';
 import type { ToolDefinition } from '../types.js';
-import { TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS } from '../types.js';
 
 /** §3.1 outils 4-5. */
 
@@ -45,7 +44,6 @@ export const ecritures: ToolDefinition = {
           : undefined,
     };
   },
-  timeoutMs: TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS,
 };
 
 export const statutJob: ToolDefinition = {
@@ -77,7 +75,6 @@ export const statutJob: ToolDefinition = {
         : undefined,
     };
   },
-  timeoutMs: TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS,
 };
 
 export const tier1EcrituresTools = [ecritures, statutJob];
