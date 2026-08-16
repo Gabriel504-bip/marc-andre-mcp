@@ -21,6 +21,7 @@ import { tier2CorrectifsTools } from './tier2/correctifs.js';
 import { tier2EcritureManuelleTools } from './tier2/ecritureManuelle.js';
 import { tier2QboTaxeTransactionTools } from './tier2/qboTaxeTransaction.js';
 import { tier2QboTaxeLotTools } from './tier2/qboTaxeLot.js';
+import { tier2QboTaxeLotInverserTools } from './tier2/qboTaxeLotInverser.js';
 
 /**
  * UNE seule allowlist, codée en dur (§2.2/§2.4). Un outil absent de cette
@@ -53,6 +54,7 @@ export function buildToolList(config: Config): ToolDefinition[] {
     ...tier2EcritureManuelleTools,
     ...tier2QboTaxeTransactionTools,
     ...tier2QboTaxeLotTools,
+    ...tier2QboTaxeLotInverserTools,
   ];
 }
 
