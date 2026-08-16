@@ -29,6 +29,23 @@ import { TIMEOUT_CONCILIATION_LENTE_MS } from '../tier1/conciliation.js';
  *      lieu de l'en extraire (120,00 $ -> 137,97 $). Si le total change, la
  *      réponse le signale explicitement — à vérifier et annuler au besoin.
  */
+/**
+ * Même principe que `booleenTolerant`/`decisionsAmbigus` ailleurs dans ce
+ * serveur (convention du projet : TOLÉRANT sur la FORME, STRICT sur le FOND).
+ * Certains clients MCP sérialisent les nombres en chaîne — refuser « 145 »
+ * parce que ce n'est pas 145 bloquerait l'appelant alors que sa valeur est
+ * parfaitement valide. Une valeur réellement invalide reste refusée.
+ */
+const nombreTolerant = z.preprocess((v) => {
+    if (typeof v === 'number')
+        return v;
+    if (typeof v === 'string' && v.trim() !== '') {
+        const n = Number(v.trim().replace(',', '.'));
+        if (!Number.isNaN(n))
+            return n;
+    }
+    return v;
+}, z.number().positive());
 const confirmationTolerante = z.preprocess((v) => {
     if (v === true)
         return true;
@@ -57,9 +74,7 @@ const qboTaxeTransactionModifierInput = z.object({
         .optional()
         .describe("Nom EXACT d'un code de taxe QuickBooks (voir ma_qbo_listes_reference, ex. « TPS/TVQ QC - 9,975 ») " +
         'à appliquer sur TOUTES les lignes de la transaction. Omettre pour ne pas y toucher.'),
-    montantBanque: z
-        .number()
-        .positive()
+    montantBanque: nombreTolerant
         .optional()
         .describe("Montant RÉELLEMENT passé au compte bancaire (celui qui est apparié au fil bancaire). Remis " +
         'tel quel dans la ligne de la transaction : QuickBooks en extrait alors lui-même la taxe, ' +
