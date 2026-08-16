@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS } from '../types.js';
 /**
  * §3.1 outils 8-11. Ces quatre routes sont en `requireAdmin` côté
  * marc-andre-app (pas seulement `requireStaff`) — signal que le projet les
@@ -21,6 +22,7 @@ export const financeCabinet = {
         force: z.boolean().default(false).optional(),
     }),
     action: 'finance',
+    timeoutMs: TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS,
 };
 export const tachesEquipe = {
     name: 'ma_taches_equipe',
@@ -34,6 +36,7 @@ export const tachesEquipe = {
         force: z.boolean().default(false).optional(),
     }),
     action: 'taches_equipe',
+    timeoutMs: TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS,
 };
 export const journalAudit = {
     name: 'ma_journal_audit',
@@ -59,5 +62,6 @@ export const accueilSynthese = {
         "⚠️ Le compteur de missions est un proxy approximatif assumé côté marc-andre-app.",
     inputSchema: z.object({}),
     action: 'accueil_synthese',
+    timeoutMs: TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS,
 };
 export const tier1AdminTools = [financeCabinet, tachesEquipe, journalAudit, accueilSynthese];

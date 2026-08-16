@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { sessionToken } from '../../schemas/common.js';
 import type { ToolDefinition } from '../types.js';
+import { TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS } from '../types.js';
 
 /** §3.1 outils 6-7. */
 
@@ -20,6 +21,7 @@ export const qboStatut: ToolDefinition = {
       message: 'Précise sessionToken ou cabinet=true.',
     }),
   action: 'qbo_statut',
+  timeoutMs: TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS,
 };
 
 export const qboListesReference: ToolDefinition = {
@@ -35,6 +37,7 @@ export const qboListesReference: ToolDefinition = {
     refresh: z.boolean().default(false).optional(),
   }),
   action: 'qbo_listes_reference',
+  timeoutMs: TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS,
 };
 
 export const tier1QuickbooksTools = [qboStatut, qboListesReference];

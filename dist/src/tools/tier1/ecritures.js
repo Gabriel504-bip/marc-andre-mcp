@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { sessionToken } from '../../schemas/common.js';
 import { stripRawFields } from '../../format/summarize.js';
+import { TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS } from '../types.js';
 /** §3.1 outils 4-5. */
 export const ecritures = {
     name: 'ma_ecritures',
@@ -39,6 +40,7 @@ export const ecritures = {
                 : undefined,
         };
     },
+    timeoutMs: TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS,
 };
 export const statutJob = {
     name: 'ma_statut_job',
@@ -69,5 +71,6 @@ export const statutJob = {
                 : undefined,
         };
     },
+    timeoutMs: TIMEOUT_LECTURE_DOSSIER_VOLUMINEUX_MS,
 };
 export const tier1EcrituresTools = [ecritures, statutJob];
