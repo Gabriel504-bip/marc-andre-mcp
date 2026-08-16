@@ -54,6 +54,13 @@ const qboTaxeLotAppliquerInput = z.object({
         .enum(['taxe-non-comprise', 'taxe-comprise', 'hors-champ'])
         .default('taxe-comprise')
         .describe('Menu « Affichage des montants » de QuickBooks à poser sur chaque transaction.'),
+    sensTaxe: z
+        .enum(['ventes', 'achats'])
+        .optional()
+        .describe("Côté du registre où la taxe est déclarée : « ventes » (TaxApplicableOn: Sales, taxe PERÇUE — " +
+        "le cas des revenus) ou « achats » (Purchase, taxe PAYÉE). Déduit automatiquement du type des " +
+        'comptes touchés si omis : un compte de revenu donne « ventes ». À ne forcer que si la ' +
+        'déduction est erronée.'),
     taille: nombreTolerant
         .default(100)
         .describe('Nombre maximum de transactions traitées par appel (1 à 100, défaut 100).'),
@@ -67,7 +74,9 @@ export const qboTaxeLotAppliquer = {
     tier: 2,
     description: "Applique un code de taxe EN LOT à toutes les transactions de revenu d'une période qui ne l'ont " +
         'pas encore, en préservant le montant bancaire de chacune (QuickBooks calcule la taxe, la base ' +
-        'va dans la ligne). Conçu pour les gros volumes : réponse COMPACTE (compteurs + identifiants, ' +
+        'va dans la ligne) et du BON CÔTÉ du registre — par défaut « ventes » (TaxApplicableOn: Sales), ' +
+        "puisqu'un dépôt de revenu produit de la taxe PERÇUE. Conçu pour les gros volumes : réponse " +
+        'COMPACTE (compteurs + identifiants, ' +
         "jamais l'état complet de chaque transaction) et REPRENABLE — rappelle simplement le même appel " +
         "jusqu'à `resteATraiter: 0`, une transaction déjà traitée n'est jamais reprise, même depuis une " +
         'autre session. APERÇU PAR DÉFAUT : rien n\'est modifié tant que `confirmation` n\'est pas VRAI. ' +

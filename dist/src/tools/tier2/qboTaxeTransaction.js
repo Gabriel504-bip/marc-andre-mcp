@@ -81,6 +81,13 @@ const qboTaxeTransactionModifierInput = z.object({
         'donc le total reste égal au montant concilié. Marc André ne calcule AUCUNE taxe. ' +
         "À fournir seulement si le montant d'origine a été perdu par une modification antérieure ; " +
         'sinon la somme des lignes actuelles fait foi.'),
+    sensTaxe: z
+        .enum(['ventes', 'achats'])
+        .optional()
+        .describe("Côté du registre où la taxe est déclarée : « ventes » (TaxApplicableOn: Sales, taxe PERÇUE — " +
+        "le cas des revenus) ou « achats » (Purchase, taxe PAYÉE). Déduit automatiquement du type des " +
+        'comptes touchés si omis : un compte de revenu donne « ventes ». À ne forcer que si la ' +
+        'déduction est erronée.'),
     confirmation: confirmationTolerante
         .default(false)
         .describe("FAUX (défaut) = aperçu : relit la transaction réelle et montre son état actuel, rien n'est " +
@@ -92,7 +99,8 @@ export const qboTaxeTransactionModifier = {
     tier: 2,
     description: "Modifie le traitement de taxe d'une transaction QuickBooks DÉJÀ EXISTANTE : le menu " +
         "« Affichage des montants » (taxe-non-comprise / taxe-comprise / hors-champ) et/ou le code de " +
-        'taxe appliqué à ses lignes. Cas typique : un dépôt saisi « Hors champ de la taxe » alors que ' +
+        'taxe appliqué à ses lignes, du BON CÔTÉ du registre (ventes ou achats). Cas typique : un ' +
+        'dépôt saisi « Hors champ de la taxe » alors que ' +
         'le revenu est taxable. APERÇU PAR DÉFAUT : rien n\'est modifié tant que `confirmation` n\'est ' +
         "pas explicitement VRAI. Relit toujours la transaction avant ET après, et SIGNALE si le TOTAL a " +
         'changé — QuickBooks Canada a déjà, dans un cas documenté, AJOUTÉ la taxe par-dessus le montant ' +
