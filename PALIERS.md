@@ -35,6 +35,9 @@ l'app pour l'instant).
 
 | `ma_qbo_taxe_transaction_modifier` (2026-08-15, demande explicite de Gabriel) | modifie le traitement de taxe d'une transaction QuickBooks **déjà existante** : menu « Affichage des montants » (`GlobalTaxCalculation`) et/ou code de taxe des lignes. Relit avant ET après, compare les totaux. | **non — irréversible.** `confirmation` forcée à `false` sauf `true` EXACT (imposée après le spread côté passerelle) + `QBO_WRITE_ENABLED` + SyncToken relu juste avant l'écriture + relecture de vérification. Signale explicitement toute dérive du TOTAL (précédent v2.37.1 : « Taxe comprise » avait ajouté la taxe au lieu de l'extraire, 120,00 $ -> 137,97 $). |
 
+| `ma_qbo_revenus_sans_taxe` (2026-08-16) — **palier 1**, listé ici pour le contexte | rapport en LECTURE SEULE des transactions de revenu sans taxe sur une période (Reçus de vente, Factures, Notes de crédit, Remboursements, Dépôts et Écritures de journal touchant un compte de revenu). | oui — aucun effet. Expose un bloc `couverture` (transactions lues par type) pour que la complétude soit vérifiable par recoupement, et `tronque` si la borne de lecture est atteinte. |
+| `ma_qbo_taxe_lot_appliquer` (2026-08-16, demande de Gabriel : 433 dépôts à corriger) | applique un code de taxe **en lot** aux transactions de revenu d'une période, en préservant le montant bancaire de chacune. | **non — irréversible**, mêmes verrous que l'outil unitaire (`confirmation` fausse par défaut + `QBO_WRITE_ENABLED`), plus : réponse compacte, budget de temps sous la limite de la fonction, et **reprise sans registre** (une transaction déjà traitée porte le code, le balayage ne la retrouve plus). Toute dérive de total est listée nommément dans `alertesTotalModifie`. |
+
 ### Amendement — `ma_ecriture_manuelle_publier` (2026-08-15)
 
 Le geste « publier réellement dans QuickBooks » (`qbo-jobs/review` action
