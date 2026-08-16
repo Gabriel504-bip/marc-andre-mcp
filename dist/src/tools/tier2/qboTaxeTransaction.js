@@ -57,6 +57,15 @@ const qboTaxeTransactionModifierInput = z.object({
         .optional()
         .describe("Nom EXACT d'un code de taxe QuickBooks (voir ma_qbo_listes_reference, ex. « TPS/TVQ QC - 9,975 ») " +
         'à appliquer sur TOUTES les lignes de la transaction. Omettre pour ne pas y toucher.'),
+    montantBanque: z
+        .number()
+        .positive()
+        .optional()
+        .describe("Montant RÉELLEMENT passé au compte bancaire (celui qui est apparié au fil bancaire). Remis " +
+        'tel quel dans la ligne de la transaction : QuickBooks en extrait alors lui-même la taxe, ' +
+        'donc le total reste égal au montant concilié. Marc André ne calcule AUCUNE taxe. ' +
+        "À fournir seulement si le montant d'origine a été perdu par une modification antérieure ; " +
+        'sinon la somme des lignes actuelles fait foi.'),
     confirmation: confirmationTolerante
         .default(false)
         .describe("FAUX (défaut) = aperçu : relit la transaction réelle et montre son état actuel, rien n'est " +
