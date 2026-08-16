@@ -38,14 +38,18 @@ export const qboRevenusSansTaxe: ToolDefinition = {
   name: 'ma_qbo_revenus_sans_taxe',
   tier: 1,
   description:
-    "Rapport EN LECTURE SEULE : liste les transactions de REVENU (Reçus de vente, Factures, " +
-    "Dépôts touchant un compte de revenu) d'une période qui ne portent AUCUNE taxe. Pour chacune, " +
+    "Rapport EN LECTURE SEULE : liste les transactions de REVENU d'une période qui ne portent AUCUNE " +
+    'taxe. Couvre Reçus de vente, Factures, Notes de crédit, Remboursements, et les Dépôts et ' +
+    "Écritures de journal touchant un compte de revenu. Les Paiements sont volontairement exclus " +
+    '(ils encaissent une facture déjà comptée). Pour chacune, ' +
     'donne le motif précis : « hors-champ-de-la-taxe » (menu Affichage des montants réglé sur Hors ' +
     'champ), « aucun-code-de-taxe-sur-les-lignes », ou « code-present-mais-taxe-calculee-a-zero » ' +
     "(code exonéré/détaxé). Ne modifie RIEN dans QuickBooks. ⚠️ Ne tranche pas : une clinique a de " +
     "vrais revenus exonérés — le motif explique pourquoi la taxe est absente, il ne dit pas que " +
     "c'est une erreur. Si la réponse indique `tronque: true`, la liste est incomplète : découpe la " +
-    'période en tranches plus courtes.',
+    'période en tranches plus courtes. La réponse contient un bloc `couverture` (types examinés, ' +
+    'nombre de transactions LUES par type, nombre sans taxe par type) qui permet de recouper la ' +
+    "complétude avec un rapport QuickBooks plutôt que d'avoir à la croire sur parole.",
   inputSchema: revenusSansTaxeInput,
   action: 'qbo_revenus_sans_taxe',
 };
