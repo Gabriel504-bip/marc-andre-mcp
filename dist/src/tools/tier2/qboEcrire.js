@@ -31,8 +31,14 @@ export const qboEcrire = {
     description: "Écriture LIBRE dans QuickBooks : crée, modifie ou supprime n'importe quelle entité (Invoice, " +
         'Deposit, JournalEntry, Purchase, Customer, Vendor, Account, Item, CreditMemo...). Aucune limite ' +
         'de capacité — tout ce que QuickBooks accepte est faisable, avec le payload documenté par Intuit. ' +
-        "APERÇU PAR DÉFAUT : rien n'est écrit tant que `confirmation` n'est pas explicitement VRAI ; " +
-        "l'aperçu relit l'état actuel et montre ce qui partirait. Après écriture, l'objet est RELU et " +
+        '⚠️ APPROBATION HUMAINE OBLIGATOIRE, en deux temps. (1) Appelle SANS `confirmation` : tu obtiens ' +
+        "l'état actuel, le payload exact qui partirait, et un `jetonApprobation`. (2) PRÉSENTE cet aperçu " +
+        "à Gabriel et ATTENDS son accord explicite — n'utilise JAMAIS le jeton dans le même tour de " +
+        "conversation que l'aperçu, l'approbation doit venir de lui, pas de toi. (3) Rappelle alors avec " +
+        '`confirmation: true` ET `jetonApprobation`. Sans jeton valide, le serveur refuse (HTTP 428) : le ' +
+        "jeton est lié au contenu exact, donc Gabriel approuve précisément ce qui partira, jamais une " +
+        "version voisine. Le mémo de chaque transaction écrite porte automatiquement « par l'application " +
+        'Marc André » (ajouté au mémo existant, jamais à sa place). Après écriture, l\'objet est RELU et ' +
         'retourné (`etatApres`) — ne jamais se fier à la seule réponse de création. Le SyncToken est ' +
         "toujours relu côté serveur, jamais celui que tu fournis. Nécessite QBO_WRITE_ENABLED. Pour " +
         'lire sans rien modifier, utilise ma_qbo_lire.',
@@ -57,8 +63,14 @@ export const qboEcrire = {
             "l'objet complet — attention, QuickBooks remplace alors le tableau Line en entier."),
         confirmation: confirmationTolerante
             .default(false)
-            .describe("FAUX (défaut) = aperçu : relit l'état actuel et montre le payload qui partirait, sans rien " +
-            'modifier. VRAI exécute RÉELLEMENT dans QuickBooks.'),
+            .describe("FAUX (défaut) = aperçu : relit l'état actuel, montre le payload qui partirait, et retourne " +
+            'un `jetonApprobation`. VRAI exécute réellement — mais exige `jetonApprobation`.'),
+        jetonApprobation: z
+            .string()
+            .optional()
+            .describe("Jeton retourné par l'aperçu. Obligatoire pour écrire. Il est calculé à partir du contenu " +
+            'EXACT : si les données changent, il devient invalide et il faut un nouvel aperçu — donc un ' +
+            "nouvel accord de Gabriel. Valable 15 minutes."),
     }),
     action: 'qbo_ecrire',
     timeoutMs: TIMEOUT_CONCILIATION_LENTE_MS,
