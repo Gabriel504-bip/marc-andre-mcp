@@ -7,6 +7,7 @@ import { tier1ClientTools } from '../src/tools/tier1/clients.js';
 import { tier1EcrituresTools } from '../src/tools/tier1/ecritures.js';
 import { tier1QuickbooksTools } from '../src/tools/tier1/quickbooks.js';
 import { tier1QboGeneriqueTools } from '../src/tools/tier1/qboGenerique.js';
+import { tier1QboRapportTools } from '../src/tools/tier1/qboRapport.js';
 import { tier1RevenusSansTaxeTools } from '../src/tools/tier1/revenusSansTaxe.js';
 import { tier1AdminTools } from '../src/tools/tier1/admin.js';
 import { tier1ConciliationTools } from '../src/tools/tier1/conciliation.js';
@@ -27,6 +28,7 @@ const all = [
   ...tier1EcrituresTools,
   ...tier1QuickbooksTools,
   ...tier1QboGeneriqueTools,
+  ...tier1QboRapportTools,
   ...tier1RevenusSansTaxeTools,
   ...tier1AdminTools,
   ...tier1ConciliationTools,

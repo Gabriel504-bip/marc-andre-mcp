@@ -10,6 +10,7 @@ import { tier1ClientTools } from './tier1/clients.js';
 import { tier1EcrituresTools } from './tier1/ecritures.js';
 import { tier1QuickbooksTools } from './tier1/quickbooks.js';
 import { tier1QboGeneriqueTools } from './tier1/qboGenerique.js';
+import { tier1QboRapportTools } from './tier1/qboRapport.js';
 import { tier1RevenusSansTaxeTools } from './tier1/revenusSansTaxe.js';
 import { tier1AdminTools } from './tier1/admin.js';
 import { tier1ConciliationTools } from './tier1/conciliation.js';
@@ -41,6 +42,7 @@ export function buildToolList(config: Config): ToolDefinition[] {
     ...tier1EcrituresTools,
     ...tier1QuickbooksTools,
     ...tier1QboGeneriqueTools,
+    ...tier1QboRapportTools,
     ...tier1RevenusSansTaxeTools,
     ...tier1AdminTools,
     ...tier1ConciliationTools,
