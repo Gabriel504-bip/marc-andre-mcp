@@ -38,6 +38,35 @@ l'app pour l'instant).
 | `ma_qbo_revenus_sans_taxe` (2026-08-16) — **palier 1**, listé ici pour le contexte | rapport en LECTURE SEULE des transactions de revenu sans taxe sur une période (Reçus de vente, Factures, Notes de crédit, Remboursements, Dépôts et Écritures de journal touchant un compte de revenu). | oui — aucun effet. Expose un bloc `couverture` (transactions lues par type) pour que la complétude soit vérifiable par recoupement, et `tronque` si la borne de lecture est atteinte. |
 | `ma_qbo_taxe_lot_appliquer` (2026-08-16, demande de Gabriel : 433 dépôts à corriger) | applique un code de taxe **en lot** aux transactions de revenu d'une période, en préservant le montant bancaire de chacune. | **non — irréversible**, mêmes verrous que l'outil unitaire (`confirmation` fausse par défaut + `QBO_WRITE_ENABLED`), plus : réponse compacte, budget de temps sous la limite de la fonction, et **reprise sans registre** (une transaction déjà traitée porte le code, le balayage ne la retrouve plus). Toute dérive de total est listée nommément dans `alertesTotalModifie`. |
 
+| `ma_qbo_lire` (2026-08-16) — **palier 1**, listé ici pour le contexte | lecture LIBRE de QuickBooks : n'importe quelle requête SELECT, ou une entité par Id. | oui — aucun effet. Refuse tout verbe autre que SELECT, borne MAXRESULTS, tronque avec drapeau explicite plutôt que de saturer la session. |
+| `ma_qbo_taxe_lot_corriger_sens` (2026-08-16) | bascule EN LOT le côté du registre (ventes/achats) des transactions déjà taxées. | **non — irréversible**, mais AUCUN montant n'est réécrit : seul `TaxApplicableOn` change, donc aucun appariement bancaire n'est menacé. Vérifie que le total n'a pas bougé ET que le côté a réellement été appliqué. |
+| `ma_qbo_ecrire` (2026-08-16, demande de Gabriel : « aucune limite sur l'API ») | crée, modifie ou supprime **n'importe quelle** entité QuickBooks. Aucune limite de capacité. | **non — irréversible.** Voir « Amendement — `ma_qbo_ecrire` » ci-dessous. `confirmation` fausse par défaut + `QBO_WRITE_ENABLED` + SyncToken toujours relu côté serveur + relecture de vérification après écriture. |
+
+### Amendement — `ma_qbo_ecrire` (2026-08-16)
+
+Demande explicite de Gabriel : « je veux qu'avec la connexion de Claude via
+Marc André il n'y ait aucune limite sur l'API ». Cet outil abolit donc la
+liste blanche par entité : tout ce que QuickBooks accepte est faisable.
+
+La justification est solide — pendant toute une journée, chaque donnée
+manquante a exigé de construire un outil étroit, de le déployer, puis
+d'attendre que le connecteur le reprenne, alors que l'information existait
+déjà côté QuickBooks.
+
+Ce qui N'a PAS été retiré, et pourquoi. Les deux garde-fous conservés sont
+exactement ceux qui ont évité les deux accidents du 2026-08-16 :
+
+  1. **Aperçu par défaut** — l'aperçu a montré 4 671 transactions au lieu de
+     436 avant une inversion en lot, évitant de détruire la taxe légitime de
+     plus de 4 200 transactions d'un vrai client.
+  2. **Relecture après écriture** — c'est elle qui a attrapé la dérive du
+     dépôt 483 (145,00 $ devenu 166,71 $) au moment où elle s'est produite,
+     plutôt que des mois plus tard dans un rapport de taxe.
+
+La leçon retenue de cette journée n'est pas « restreindre les capacités »,
+c'est « ne jamais écrire sans avoir vu ce qui partira, ni sans relire ce qui
+est arrivé ».
+
 ### Amendement — `ma_ecriture_manuelle_publier` (2026-08-15)
 
 Le geste « publier réellement dans QuickBooks » (`qbo-jobs/review` action

@@ -3,6 +3,7 @@ import { ToolNotAllowedError, toDisplayMessage } from '../core/errors.js';
 import { tier1ClientTools } from './tier1/clients.js';
 import { tier1EcrituresTools } from './tier1/ecritures.js';
 import { tier1QuickbooksTools } from './tier1/quickbooks.js';
+import { tier1QboGeneriqueTools } from './tier1/qboGenerique.js';
 import { tier1RevenusSansTaxeTools } from './tier1/revenusSansTaxe.js';
 import { tier1AdminTools } from './tier1/admin.js';
 import { tier1ConciliationTools } from './tier1/conciliation.js';
@@ -16,6 +17,7 @@ import { tier2QboTaxeTransactionTools } from './tier2/qboTaxeTransaction.js';
 import { tier2QboTaxeLotTools } from './tier2/qboTaxeLot.js';
 import { tier2QboTaxeLotInverserTools } from './tier2/qboTaxeLotInverser.js';
 import { tier2QboTaxeSensTools } from './tier2/qboTaxeSens.js';
+import { tier2QboEcrireTools } from './tier2/qboEcrire.js';
 /**
  * UNE seule allowlist, codée en dur (§2.2/§2.4). Un outil absent de cette
  * table n'existe pas pour Claude — pas de 404 en aval à masquer, il n'est
@@ -30,6 +32,7 @@ export function buildToolList(config) {
         ...tier1ClientTools,
         ...tier1EcrituresTools,
         ...tier1QuickbooksTools,
+        ...tier1QboGeneriqueTools,
         ...tier1RevenusSansTaxeTools,
         ...tier1AdminTools,
         ...tier1ConciliationTools,
@@ -48,6 +51,7 @@ export function buildToolList(config) {
         ...tier2QboTaxeLotTools,
         ...tier2QboTaxeLotInverserTools,
         ...tier2QboTaxeSensTools,
+        ...tier2QboEcrireTools,
     ];
 }
 function checkClientAllowlist(config, input) {

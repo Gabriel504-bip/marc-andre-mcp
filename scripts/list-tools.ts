@@ -6,6 +6,7 @@
 import { tier1ClientTools } from '../src/tools/tier1/clients.js';
 import { tier1EcrituresTools } from '../src/tools/tier1/ecritures.js';
 import { tier1QuickbooksTools } from '../src/tools/tier1/quickbooks.js';
+import { tier1QboGeneriqueTools } from '../src/tools/tier1/qboGenerique.js';
 import { tier1RevenusSansTaxeTools } from '../src/tools/tier1/revenusSansTaxe.js';
 import { tier1AdminTools } from '../src/tools/tier1/admin.js';
 import { tier1ConciliationTools } from '../src/tools/tier1/conciliation.js';
@@ -19,11 +20,13 @@ import { tier2QboTaxeTransactionTools } from '../src/tools/tier2/qboTaxeTransact
 import { tier2QboTaxeLotTools } from '../src/tools/tier2/qboTaxeLot.js';
 import { tier2QboTaxeLotInverserTools } from '../src/tools/tier2/qboTaxeLotInverser.js';
 import { tier2QboTaxeSensTools } from '../src/tools/tier2/qboTaxeSens.js';
+import { tier2QboEcrireTools } from '../src/tools/tier2/qboEcrire.js';
 
 const all = [
   ...tier1ClientTools,
   ...tier1EcrituresTools,
   ...tier1QuickbooksTools,
+  ...tier1QboGeneriqueTools,
   ...tier1RevenusSansTaxeTools,
   ...tier1AdminTools,
   ...tier1ConciliationTools,
@@ -37,6 +40,7 @@ const all = [
   ...tier2QboTaxeLotTools,
   ...tier2QboTaxeLotInverserTools,
   ...tier2QboTaxeSensTools,
+  ...tier2QboEcrireTools,
 ];
 
 for (const t of all) {
