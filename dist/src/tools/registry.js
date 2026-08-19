@@ -20,6 +20,7 @@ import { tier2QboTaxeLotInverserTools } from './tier2/qboTaxeLotInverser.js';
 import { tier2QboTaxeSensTools } from './tier2/qboTaxeSens.js';
 import { tier2QboEcrireTools } from './tier2/qboEcrire.js';
 import { tier2ReleveDeposerTools } from './tier2/releveDeposer.js';
+import { tier2EcrituresLotTools } from './tier2/ecrituresLot.js';
 /**
  * UNE seule allowlist, codée en dur (§2.2/§2.4). Un outil absent de cette
  * table n'existe pas pour Claude — pas de 404 en aval à masquer, il n'est
@@ -56,6 +57,7 @@ export function buildToolList(config) {
         ...tier2QboTaxeSensTools,
         ...tier2QboEcrireTools,
         ...tier2ReleveDeposerTools,
+        ...tier2EcrituresLotTools,
     ];
 }
 function checkClientAllowlist(config, input) {
