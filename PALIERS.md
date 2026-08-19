@@ -42,6 +42,9 @@ l'app pour l'instant).
 | `ma_qbo_taxe_lot_corriger_sens` (2026-08-16) | bascule EN LOT le côté du registre (ventes/achats) des transactions déjà taxées. | **non — irréversible**, mais AUCUN montant n'est réécrit : seul `TaxApplicableOn` change, donc aucun appariement bancaire n'est menacé. Vérifie que le total n'a pas bougé ET que le côté a réellement été appliqué. |
 | `ma_qbo_ecrire` (2026-08-16, demande de Gabriel : « aucune limite sur l'API ») | crée, modifie ou supprime **n'importe quelle** entité QuickBooks. Aucune limite de capacité. | **non — irréversible.** Voir « Amendement — `ma_qbo_ecrire` » ci-dessous. `confirmation` fausse par défaut + `QBO_WRITE_ENABLED` + SyncToken toujours relu côté serveur + relecture de vérification après écriture. |
 
+| `ma_qbo_rapport` (2026-08-17) — **palier 1**, listé ici pour le contexte | sort n'importe quel rapport QuickBooks (état des résultats, bilan, balance de vérification, grand livre, sommaire de taxes...). Comble un trou réel : les rapports vivent sur un autre point d'entrée de l'API, inaccessible aux requêtes SELECT. | oui — aucun effet. Réponse aplatie et plafonnée par défaut. |
+| `ma_releve_deposer` (2026-08-17) | dépose dans la session d'un client un relevé bancaire LU en conversation (transactions structurées, pas le fichier). | oui côté QuickBooks — **n'y touche jamais**. Écrit un fichier d'extraction dans la session. Le garde-fou n'est pas une confirmation mais le CONTRÔLE DE BALANCE : `soldeOuverture`/`soldeFermeture` obligatoires, balance recalculée et chaîne des soldes reconstruite, de sorte qu'une extraction incomplète ne peut pas passer pour bonne. Refuse d'écraser une extraction existante sans `remplacer: true`. |
+
 ### Amendement — `ma_qbo_ecrire` (2026-08-16)
 
 Demande explicite de Gabriel : « je veux qu'avec la connexion de Claude via

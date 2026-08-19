@@ -22,6 +22,7 @@ import { tier2QboTaxeLotTools } from '../src/tools/tier2/qboTaxeLot.js';
 import { tier2QboTaxeLotInverserTools } from '../src/tools/tier2/qboTaxeLotInverser.js';
 import { tier2QboTaxeSensTools } from '../src/tools/tier2/qboTaxeSens.js';
 import { tier2QboEcrireTools } from '../src/tools/tier2/qboEcrire.js';
+import { tier2ReleveDeposerTools } from '../src/tools/tier2/releveDeposer.js';
 
 const all = [
   ...tier1ClientTools,
@@ -43,6 +44,7 @@ const all = [
   ...tier2QboTaxeLotInverserTools,
   ...tier2QboTaxeSensTools,
   ...tier2QboEcrireTools,
+  ...tier2ReleveDeposerTools,
 ];
 
 for (const t of all) {

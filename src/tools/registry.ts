@@ -26,6 +26,7 @@ import { tier2QboTaxeLotTools } from './tier2/qboTaxeLot.js';
 import { tier2QboTaxeLotInverserTools } from './tier2/qboTaxeLotInverser.js';
 import { tier2QboTaxeSensTools } from './tier2/qboTaxeSens.js';
 import { tier2QboEcrireTools } from './tier2/qboEcrire.js';
+import { tier2ReleveDeposerTools } from './tier2/releveDeposer.js';
 
 /**
  * UNE seule allowlist, codée en dur (§2.2/§2.4). Un outil absent de cette
@@ -63,6 +64,7 @@ export function buildToolList(config: Config): ToolDefinition[] {
     ...tier2QboTaxeLotInverserTools,
     ...tier2QboTaxeSensTools,
     ...tier2QboEcrireTools,
+    ...tier2ReleveDeposerTools,
   ];
 }
 
