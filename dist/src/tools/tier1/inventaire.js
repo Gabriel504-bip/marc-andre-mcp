@@ -25,11 +25,24 @@ export const qboInventaireEtat = {
         'révèle un écart GL vs sous-registre. À utiliser AVANT tout ajustement, et à nouveau après, pour ' +
         'vérifier. ⚠️ Un écart de ce type ne se corrige JAMAIS par une écriture de journal : une écriture ' +
         'de journal ne touche que le solde du compte du grand livre et laisse les quantités intactes, donc ' +
-        "elle déplace l'écart au lieu de le fermer. Utilise ma_qbo_inventaire_ajuster. Le solde du grand " +
-        "livre retourné ici est celui d'AUJOURD'HUI (QuickBooks n'expose pas de solde à une date passée " +
-        "sur un compte) : ne t'en sers pas pour valider une date de clôture. Lecture seule.",
+        "elle déplace l'écart au lieu de le fermer. Utilise ma_qbo_inventaire_ajuster. " +
+        "\u26a0\ufe0f PASSE TOUJOURS `date` : sans elle aucun \u00e9cart n'est calcul\u00e9, parce que " +
+        "Account.CurrentBalance de QuickBooks est FAUX sur un compte d'inventaire \u2014 mesur\u00e9 : il " +
+        "annon\u00e7ait 131 700 $ pour un compte que la balance de v\u00e9rification donnait \u00e0 271 550 $. Avec " +
+        "`date`, l'\u00e9cart vient de la balance de v\u00e9rification. Les quantit\u00e9s par article restent " +
+        "celles d'AUJOURD'HUI. Lecture seule.",
     inputSchema: z.object({
         sessionToken,
+        date: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional()
+            .describe("Date de r\u00e9f\u00e9rence (AAAA-MM-JJ) pour comparer le sous-registre au grand livre. \u00c0 " +
+            "FOURNIR SYST\u00c9MATIQUEMENT : sans elle, aucun \u00e9cart n'est calcul\u00e9, et c'est volontaire. " +
+            "Account.CurrentBalance de QuickBooks est FAUX sur un compte d'inventaire (mesur\u00e9 le " +
+            "2026-08-20 : 131 700 $ annonc\u00e9s contre 271 550 $ \u00e0 la balance de v\u00e9rification, " +
+            "139 850 $ d'\u00e9cart invisible). Avec `date`, l'\u00e9cart est fond\u00e9 sur la balance de " +
+            "v\u00e9rification \u00e0 cette date."),
         inclureInactifs: z
             .boolean()
             .default(false)
