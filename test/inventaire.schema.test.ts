@@ -99,14 +99,14 @@ describe('ma_qbo_inventaire_ajuster — quantités', () => {
 });
 
 describe('ma_qbo_inventaire_ajuster — champ de quantité (entité QBO non documentée)', () => {
-  it('utilise NewQty par défaut : QuickBooks calcule alors l\'écart lui-même', () => {
+  it('utilise QtyDiff par défaut : la seule forme que QuickBooks accepte (mesuré)', () => {
     const r = qboInventaireAjuster.inputSchema.parse({ ...baseAj }) as any;
-    expect(r.champQuantite).toBe('NewQty');
+    expect(r.champQuantite).toBe('QtyDiff');
   });
 
-  it('permet de basculer sur QtyDiff sans bloquer l\'appelant', () => {
-    const r = qboInventaireAjuster.inputSchema.parse({ ...baseAj, champQuantite: 'QtyDiff' }) as any;
-    expect(r.champQuantite).toBe('QtyDiff');
+  it('permet de repasser à NewQty si la forme acceptée changeait un jour', () => {
+    const r = qboInventaireAjuster.inputSchema.parse({ ...baseAj, champQuantite: 'NewQty' }) as any;
+    expect(r.champQuantite).toBe('NewQty');
   });
 
   it('refuse un nom de champ inventé plutôt que de l\'envoyer à QuickBooks', () => {

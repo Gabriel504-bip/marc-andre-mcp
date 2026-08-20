@@ -102,13 +102,15 @@ export const qboInventaireAjuster: ToolDefinition = {
       ),
     champQuantite: z
       .enum(['NewQty', 'QtyDiff'])
-      .default('NewQty')
+      .default('QtyDiff')
       .describe(
-        "Nom du champ de quantite envoye a QuickBooks. Laisse le defaut (NewQty : la quantite CIBLE, " +
-          "QuickBooks calcule l'ecart lui-meme). L'entite InventoryAdjustment n'est pas documentee " +
-          "publiquement par Intuit et les deux formes existent selon les versions : si QuickBooks refuse " +
-          "le champ, rappelle le MEME appel avec 'QtyDiff' (l'ecart est alors envoye a la place). Aucune " +
-          "bascule automatique — un retry silencieux masquerait laquelle des deux formes est la bonne."
+        "Nom du champ de quantite envoye a QuickBooks. Laisse le defaut : QtyDiff est la forme MESUREE " +
+          "comme fonctionnelle (2026-08-20, ajustement reel verifie) ; QuickBooks REFUSE NewQty avec " +
+          "« value must not be null : Line.ItemAdjustmentLineDetail.QtyDiff ». L'entite " +
+          "InventoryAdjustment n'etant pas documentee publiquement par Intuit, ce parametre reste ouvert " +
+          "au cas ou la forme acceptee changerait — le jour ou QtyDiff serait refuse, il faudra un appel " +
+          "et non un deploiement. Aucune bascule automatique : un retry silencieux masquerait laquelle " +
+          "des deux formes QuickBooks accepte."
       ),
     memo: z.string().optional().describe("Mémo de l'ajustement. La mention « par l'application Marc André » est ajoutée automatiquement, jamais à sa place."),
     refNumber: z.string().optional().describe('Numéro de document (21 caractères maximum).'),
