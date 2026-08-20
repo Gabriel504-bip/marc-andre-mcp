@@ -23,6 +23,15 @@ import { UpstreamError, UpstreamTimeoutError } from './errors.js';
  *   X-Agent-Request-Id: <uuid>
  */
 
+/**
+ * Un Fault QuickBooks complet (Message + Detail + code) tient sous 4 000
+ * caractères. Au-delà, ce n'est plus un message d'erreur mais un dump.
+ */
+const MESSAGE_ERREUR_MAX = 4000;
+
+/** Réponse non-JSON (page HTML, binaire) : on n'en garde qu'un aperçu. */
+const SNIPPET_NON_JSON_MAX = 300;
+
 const RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
 const MAX_RETRIES = 3;
 
@@ -116,7 +125,46 @@ export class MarcAndreHttpClient {
     return this.invoke('__health__', {}, 'health-check');
   }
 
+  /**
+   * Extrait le message d'erreur d'une réponse amont.
+   *
+   * POURQUOI CE N'EST PLUS UNE TRONCATURE À 200 CARACTÈRES (2026-08-20).
+   * Pendant toute une journée, chaque échec QuickBooks est arrivé illisible :
+   * « Request has invalid or unsupported prope… ». Le `Detail` de QuickBooks —
+   * la seule partie qui NOMME la propriété refusée — tombait toujours
+   * au-delà de la coupure. Des créations d'articles et des ajustements
+   * d'inventaire ont été réessayés à l'aveugle sur un dossier de production,
+   * avec deux structures de données différentes, sans jamais pouvoir lire ce
+   * que QuickBooks reprochait. Le plafond de 200 caractères a coûté plus cher
+   * que tous les bugs qu'il protégeait.
+   *
+   * LA DISTINCTION QUI COMPTE : un message d'erreur DÉLIBÉRÉ (la réponse JSON
+   * de marc-andre-app, champ `error`) mérite d'être transmis en entier. Un
+   * blob ACCIDENTEL (page d'erreur HTML de Vercel, dump binaire) mérite le
+   * plafond serré d'origine — c'était le vrai risque, et il reste couvert.
+   */
   private safeSnippet(raw: string): string {
-    return raw.length > 200 ? raw.slice(0, 200) + '…' : raw;
+    try {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const message =
+        typeof parsed?.error === 'string'
+          ? parsed.error
+          : typeof parsed?.message === 'string'
+            ? parsed.message
+            : null;
+      if (message) {
+        // Généreux mais borné : un Fault QuickBooks complet tient largement
+        // ici, un registre entier n'y tiendrait pas.
+        return message.length > MESSAGE_ERREUR_MAX
+          ? message.slice(0, MESSAGE_ERREUR_MAX) + '… (message tronqué)'
+          : message;
+      }
+      // JSON structuré sans champ `error` reconnu : on le rend tel quel, borné.
+      return raw.length > MESSAGE_ERREUR_MAX ? raw.slice(0, MESSAGE_ERREUR_MAX) + '… (tronqué)' : raw;
+    } catch {
+      // Pas du JSON : page HTML, dump binaire… c'est le cas que le plafond
+      // serré protégeait, et il continue de le protéger.
+      return raw.length > SNIPPET_NON_JSON_MAX ? raw.slice(0, SNIPPET_NON_JSON_MAX) + '…' : raw;
+    }
   }
 }
