@@ -4,6 +4,7 @@ import { tier1ClientTools } from './tier1/clients.js';
 import { tier1EcrituresTools } from './tier1/ecritures.js';
 import { tier1QuickbooksTools } from './tier1/quickbooks.js';
 import { tier1QboGeneriqueTools } from './tier1/qboGenerique.js';
+import { tier1InventaireTools } from './tier1/inventaire.js';
 import { tier1QboRapportTools } from './tier1/qboRapport.js';
 import { tier1RevenusSansTaxeTools } from './tier1/revenusSansTaxe.js';
 import { tier1AdminTools } from './tier1/admin.js';
@@ -19,6 +20,7 @@ import { tier2QboTaxeLotTools } from './tier2/qboTaxeLot.js';
 import { tier2QboTaxeLotInverserTools } from './tier2/qboTaxeLotInverser.js';
 import { tier2QboTaxeSensTools } from './tier2/qboTaxeSens.js';
 import { tier2QboEcrireTools } from './tier2/qboEcrire.js';
+import { tier2InventaireAjusterTools } from './tier2/inventaireAjuster.js';
 import { tier2ReleveDeposerTools } from './tier2/releveDeposer.js';
 import { tier2EcrituresLotTools } from './tier2/ecrituresLot.js';
 /**
@@ -36,6 +38,7 @@ export function buildToolList(config) {
         ...tier1EcrituresTools,
         ...tier1QuickbooksTools,
         ...tier1QboGeneriqueTools,
+        ...tier1InventaireTools,
         ...tier1QboRapportTools,
         ...tier1RevenusSansTaxeTools,
         ...tier1AdminTools,
@@ -56,6 +59,7 @@ export function buildToolList(config) {
         ...tier2QboTaxeLotInverserTools,
         ...tier2QboTaxeSensTools,
         ...tier2QboEcrireTools,
+        ...tier2InventaireAjusterTools,
         ...tier2ReleveDeposerTools,
         ...tier2EcrituresLotTools,
     ];

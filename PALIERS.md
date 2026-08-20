@@ -83,6 +83,35 @@ passerelle + `QBO_WRITE_ENABLED` hors de portée de l'agent), et ne s'applique
 QU'à des écritures déjà déposées et visibles dans le module Écritures — jamais
 à une écriture arbitraire non revue.
 
+## Amendement ASSUMÉ (2026-08-20) — inventaire : lire les quantités, puis les ajuster
+
+Demande de Gabriel : « il faut que Marc André puisse modifier les inventaires ».
+
+**Palier 1 — `ma_qbo_inventaire_etat`.** Lecture seule : quantités par article,
+valeur du sous-registre, et comparaison avec le solde du compte d'actif. Aucun
+effet possible.
+
+**Palier 2 — `ma_qbo_inventaire_ajuster`.** Crée une transaction
+`InventoryAdjustment`. Mêmes garde-fous que `qbo_ecrire`, sans exception :
+aperçu par défaut, jeton d'approbation lié au contenu exact (donc impossible de
+s'auto-approuver dans le même tour), estampille mémo, relecture des quantités
+après écriture.
+
+**Pourquoi ce n'est pas du palier 3.** Un ajustement de quantité est réversible
+par un ajustement inverse, et il est traçable (transaction datée, estampillée,
+avec son compte de contrepartie). Ce qui l'a fait basculer en palier 2, c'est
+surtout que l'ALTERNATIVE était pire : privée de cet outil, une session a passé
+une écriture de journal pour corriger un inventaire, ce qui a déplacé un écart
+de 29 900 $ au lieu de le fermer — sans que rien ne le signale, puisque le solde
+du compte, lui, avait bien bougé. Refuser l'outil correct ne protège de rien si
+l'outil incorrect reste accessible.
+
+**Note de découvrabilité, à retenir pour les prochains outils.** `ma_qbo_ecrire`
+pouvait déjà créer un `InventoryAdjustment` — la permission ne manquait pas, le
+NOM manquait. Un pouvoir générique que personne ne sait invoquer ne protège
+personne et ne sert personne : il produit juste des contournements. Quand une
+opération a un mauvais substitut évident, elle mérite son propre outil nommé.
+
 ## Palier 3 — jamais un outil MCP exécutable (aucune exception)
 
 Auth/comptes (`login`, `register`, `reset-password`, `verify-2fa`, `invite`,
