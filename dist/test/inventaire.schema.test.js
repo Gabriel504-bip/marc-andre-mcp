@@ -84,6 +84,19 @@ describe('ma_qbo_inventaire_ajuster — quantités', () => {
         expect(() => qboInventaireAjuster.inputSchema.parse({ ...baseAj, ajustements: trop })).toThrow();
     });
 });
+describe('ma_qbo_inventaire_ajuster — champ de quantité (entité QBO non documentée)', () => {
+    it('utilise NewQty par défaut : QuickBooks calcule alors l\'écart lui-même', () => {
+        const r = qboInventaireAjuster.inputSchema.parse({ ...baseAj });
+        expect(r.champQuantite).toBe('NewQty');
+    });
+    it('permet de basculer sur QtyDiff sans bloquer l\'appelant', () => {
+        const r = qboInventaireAjuster.inputSchema.parse({ ...baseAj, champQuantite: 'QtyDiff' });
+        expect(r.champQuantite).toBe('QtyDiff');
+    });
+    it('refuse un nom de champ inventé plutôt que de l\'envoyer à QuickBooks', () => {
+        expect(() => qboInventaireAjuster.inputSchema.parse({ ...baseAj, champQuantite: 'NewQuantity' })).toThrow();
+    });
+});
 describe('registre', () => {
     it('expose les deux nouveaux outils sous des noms uniques', () => {
         const noms = buildToolList({ allowTier2: true }).map((t) => t.name);

@@ -87,6 +87,14 @@ export const qboInventaireAjuster = {
             .max(50)
             .describe("Articles à ajuster (50 maximum par transaction). Les articles dont la quantité visée égale " +
             "déjà la quantité en place sont écartés au lieu d'écrire une ligne sans effet."),
+        champQuantite: z
+            .enum(['NewQty', 'QtyDiff'])
+            .default('NewQty')
+            .describe("Nom du champ de quantite envoye a QuickBooks. Laisse le defaut (NewQty : la quantite CIBLE, " +
+            "QuickBooks calcule l'ecart lui-meme). L'entite InventoryAdjustment n'est pas documentee " +
+            "publiquement par Intuit et les deux formes existent selon les versions : si QuickBooks refuse " +
+            "le champ, rappelle le MEME appel avec 'QtyDiff' (l'ecart est alors envoye a la place). Aucune " +
+            "bascule automatique — un retry silencieux masquerait laquelle des deux formes est la bonne."),
         memo: z.string().optional().describe("Mémo de l'ajustement. La mention « par l'application Marc André » est ajoutée automatiquement, jamais à sa place."),
         refNumber: z.string().optional().describe('Numéro de document (21 caractères maximum).'),
         confirmation: confirmationTolerante
